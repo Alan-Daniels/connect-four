@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Connect_Four"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <local:GameGrid HorizontalAlignment="Center" VerticalAlignment="Center" Width="500" Height="100" GridWidth="3" GridHeight="6" Background="AliceBlue"/>
-    </Grid>
+    <Viewbox Name="root" Stretch="Uniform">
+        
+    </Viewbox>
 </Window>

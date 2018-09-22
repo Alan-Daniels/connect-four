@@ -23,6 +23,22 @@ namespace Connect_Four
         public MainWindow()
         {
             InitializeComponent();
+
+            GameGrid game = new GameGrid
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                GridHeight = 6,
+                GridWidth = 7,
+                Height = 400,
+                Width = 400,
+                Background = Brushes.Aqua
+            };
+
+            //root.Children.Add(game);
+            root.Child = game;
+
+
         }
     }
 }
