@@ -35,10 +35,7 @@ namespace Connect_Four
                 Background = Brushes.Aqua
             };
 
-            //root.Children.Add(game);
             root.Child = game;
-
-
         }
     }
 }

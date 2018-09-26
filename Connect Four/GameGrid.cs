@@ -21,7 +21,6 @@ namespace Connect_Four
             set
             {
                 SetValue(GridWidthProperty, value);
-                coinGrid = new CoinType[GridWidth, GridHeight];
             }
         }
 
@@ -32,7 +31,6 @@ namespace Connect_Four
             set
             {
                 SetValue(GridHeightProperty, value);
-                coinGrid = new CoinType[GridWidth, GridHeight];
             }
         }
 
@@ -64,6 +62,7 @@ namespace Connect_Four
         private void GameGrid_Loaded(object sender, RoutedEventArgs e)
         {
             coinTosser.Create(CoinType.Red, GridSize);
+            coinGrid = new CoinType[GridWidth, GridHeight];
         }
 
         private void GameGrid_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -83,18 +82,25 @@ namespace Connect_Four
 
         private void GameGrid_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            coinTosser.Move(new Point(selectedColumn, GridHeight), GridSize, TimeSpan.FromMilliseconds(750));
-            coinTosser.Create(CoinType.Blue, GridSize);
+            int y = GetHeight(selectedColumn);
+            if (y != -1)
+            {
+                coinTosser.Move(new Point(selectedColumn, y), GridSize, TimeSpan.FromMilliseconds(100*y));
+                coinGrid[selectedColumn, y-1] = coinTosser.CoinType;
+                coinTosser.Create(CoinType.Blue, GridSize);
+            }
         }
 
-        private bool AddCoin()
+        private int GetHeight(int column)
         {
-            return !ColumnFull();
-        }
-
-        private bool ColumnFull()
-        {
-            return true;
+            for (int i = GridHeight - 1; i >= 0; i--)
+            {
+                if (coinGrid[column, i] == CoinType.None)
+                {
+                    return i+1;
+                }
+            }
+            return -1;
         }
     }
 }

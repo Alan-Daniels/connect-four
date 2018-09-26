@@ -14,6 +14,8 @@ namespace Connect_Four
         private Point location;
         private readonly Canvas canvas;
 
+        public CoinType CoinType { get; private set; }
+
         public CoinTosser(Canvas canvas)
         {
             this.canvas = canvas;
@@ -32,6 +34,7 @@ namespace Connect_Four
 
         public void Create(CoinType coinType, Size gridSize)
         {
+            CoinType = coinType;
             switch (coinType)
             {
                 case CoinType.None:
