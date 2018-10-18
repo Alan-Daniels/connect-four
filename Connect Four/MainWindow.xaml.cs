@@ -41,9 +41,9 @@ namespace Connect_Four
                             VerticalAlignment = VerticalAlignment.Center,
                             GridHeight = 6,
                             GridWidth = 7,
-                            Height = 400,
-                            Width = 400,
-                            Background = Brushes.Aqua
+                            Height = 1050,
+                            Width = 1050,
+                            Background = Brushes.Linen
                         };
                         break;
                 }

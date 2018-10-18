@@ -2,14 +2,14 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Connect_Four.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="IP_Seed" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">Vivamus faucibus sapien ex. id ultricies lacus tincidunt nullam.</Value>
-    </Setting>
-    <Setting Name="AvdertizementPort" Type="System.String" Scope="Application">
+    <Setting Name="AvdertizementPort" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">8995</Value>
     </Setting>
-    <Setting Name="GamePort" Type="System.String" Scope="User">
+    <Setting Name="GamePort" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">8994</Value>
+    </Setting>
+    <Setting Name="BroadcastPort" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">8996</Value>
     </Setting>
   </Settings>
 </SettingsFile>

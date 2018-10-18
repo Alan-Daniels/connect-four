@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace Connect_Four
@@ -10,7 +11,7 @@ namespace Connect_Four
     [Serializable]
     class CoinTosser
     {
-        private Ellipse coin;
+        private Image coin;
         private Point location;
         private readonly Canvas canvas;
 
@@ -40,19 +41,19 @@ namespace Connect_Four
                 case CoinType.None:
                     throw new InvalidOperationException();
                 case CoinType.Red:
-                    coin = new Ellipse()
+                    coin = new Image()
                     {
                         Width = gridSize.Width,
                         Height = gridSize.Height,
-                        Fill = Brushes.Red
+                        Source = new BitmapImage(new Uri("pack://siteoforigin:,,,/Images/coin_red.png"))
                     };
                     break;
                 case CoinType.Blue:
-                    coin = new Ellipse()
+                    coin = new Image()
                     {
                         Width = gridSize.Width,
                         Height = gridSize.Height,
-                        Fill = Brushes.Blue
+                        Source = new BitmapImage(new Uri("pack://siteoforigin:,,,/Images/coin_blue.png"))
                     };
                     break;
             }

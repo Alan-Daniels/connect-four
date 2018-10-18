@@ -24,12 +24,13 @@ namespace Connect_Four
     {
         public delegate void ConnectEventHandler(object source, ConnectionInfo connection);
         public event ConnectEventHandler Connect;
-        ConnectionInfo connection;
+        public ConnectionInfo Connection { get; private set; }
+        public Brush Fill { get { return root.Background; } set { root.Background = value; } }
 
         public ConnectionView(ConnectionInfo info)
         {
             InitializeComponent();
-            connection = info;
+            Connection = info;
             HostName.Text = info.displayName;
 
             ConnectHost.Click += ConnectHost_Click;
@@ -37,7 +38,7 @@ namespace Connect_Four
 
         private void ConnectHost_Click(object sender, RoutedEventArgs e)
         {
-            Connect?.Invoke(this, connection);
+            Connect?.Invoke(this, Connection);
         }
     }
 }

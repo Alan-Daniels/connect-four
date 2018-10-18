@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 
 namespace Connect_Four
 {
     enum CoinType
     {
-        None,
-        Red,
-        Blue
+        None = 0,
+        Red = -1,
+        Blue = 1
     }
 
     [Serializable]
@@ -61,6 +62,25 @@ namespace Connect_Four
 
         private void GameGrid_Loaded(object sender, RoutedEventArgs e)
         {
+            Size gs = GridSize;
+            for (int x = 0; x < GridWidth; x++)
+            {
+                for (int y = 1; y < GridHeight + 1; y++)
+                {
+                    {
+                        Image img = new Image()
+                        {
+                            Source = new BitmapImage(new Uri("pack://siteoforigin:,,,/Images/boardSegment.png")),
+                            Width = gs.Width+0.55,
+                            Height = gs.Height+0.55
+                        };
+                        Children.Add(img);
+                        SetLeft(img, x * gs.Width);
+                        SetTop(img, y * gs.Height);
+                        SetZIndex(img, 2);
+                    }
+                }
+            }
             coinTosser.Create(CoinType.Red, GridSize);
             coinGrid = new CoinType[GridWidth, GridHeight];
         }
@@ -85,9 +105,9 @@ namespace Connect_Four
             int y = GetHeight(selectedColumn);
             if (y != -1)
             {
-                coinTosser.Move(new Point(selectedColumn, y), GridSize, TimeSpan.FromMilliseconds(100*y));
-                coinGrid[selectedColumn, y-1] = coinTosser.CoinType;
-                coinTosser.Create(CoinType.Blue, GridSize);
+                coinTosser.Move(new Point(selectedColumn, y), GridSize, TimeSpan.FromMilliseconds(100 * y));
+                coinGrid[selectedColumn, y - 1] = coinTosser.CoinType;
+                coinTosser.Create((CoinType)((int)coinTosser.CoinType*-1), GridSize);
             }
         }
 
@@ -97,7 +117,7 @@ namespace Connect_Four
             {
                 if (coinGrid[column, i] == CoinType.None)
                 {
-                    return i+1;
+                    return i + 1;
                 }
             }
             return -1;

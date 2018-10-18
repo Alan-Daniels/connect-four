@@ -6,7 +6,8 @@
       xmlns:local="clr-namespace:Connect_Four"
       mc:Ignorable="d" 
       Height="25" Width="175"
-      Background="LightGray">
+      Background="LightGray"
+      Name="root">
     <Button Name="ConnectHost" Content="Connect" HorizontalAlignment="Left" Margin="90,3,0,0" VerticalAlignment="Top" Width="75"/>
     <TextBlock Name="HostName" HorizontalAlignment="Left" Margin="10,5,0,0" TextWrapping="Wrap" Text="Name" VerticalAlignment="Top"/>
 

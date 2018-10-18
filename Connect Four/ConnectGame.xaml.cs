@@ -58,6 +58,7 @@ namespace Connect_Four
                 }
             }
             BtnReload.IsEnabled = true;
+            ConnectionList.IsEnabled = true;
         }
 
         private void ConnectGame_Unloaded(object sender, RoutedEventArgs e)
@@ -69,12 +70,26 @@ namespace Connect_Four
         private void BtnReload_Click(object sender, RoutedEventArgs e)
         {
             Advertizer.StartGetAdvertizers();
+            ConnectionList.IsEnabled = false;
             BtnReload.IsEnabled = false;
         }
 
         private void RequestConnect(object sender, ConnectionInfo connection)
         {
+            ((ConnectionView)sender).Fill = Brushes.Yellow;
+            Advertizer.OutboundReq.Add(connection);
 
+            ConnectionInfo collision = Advertizer.GetFirstRequestPair();
+            if (collision != null)
+            {
+                // from here we make a game request.
+                // if the other user hasnt started a game or left the game it should be successful.
+                // otherwize remove the inbound request and leave the outbound marker
+            }
+            else
+            {
+                // lodge the request to the other user
+            }
         }
     }
 }
