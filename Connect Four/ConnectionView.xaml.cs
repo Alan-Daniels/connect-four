@@ -19,14 +19,25 @@ namespace Connect_Four
     /// <summary>
     /// Interaction logic for ConnectionView.xaml
     /// </summary>
+
     public partial class ConnectionView : Grid
     {
+        public delegate void ConnectEventHandler(object source, ConnectionInfo connection);
+        public event ConnectEventHandler Connect;
         ConnectionInfo connection;
+
         public ConnectionView(ConnectionInfo info)
         {
             InitializeComponent();
             connection = info;
-            HostName.Content = info.displayName;
+            HostName.Text = info.displayName;
+
+            ConnectHost.Click += ConnectHost_Click;
+        }
+
+        private void ConnectHost_Click(object sender, RoutedEventArgs e)
+        {
+            Connect?.Invoke(this, connection);
         }
     }
 }

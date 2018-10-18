@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -8,7 +9,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 
 namespace Connection
 {
@@ -25,19 +25,17 @@ namespace Connection
 
         public static List<ConnectionInfo> connections;
 
-        private static readonly System.Timers.Timer timeout = new System.Timers.Timer(4000);
-
         static Advertizer()
         {
             hostConnectionInfo = new ConnectionInfo()
             {
-                address = IP.LocalAddress
+                address = IP.LocalAddress,
+                displayName = "Bob"
             };
 
             connections = new List<ConnectionInfo>();
             GetAdvertizers.DoWork += GetAdvertizers_DoWork;
             Advertize.DoWork += Advertize_DoWork;
-            timeout.Elapsed += (object sender, ElapsedEventArgs e) => { timeout.Stop(); GetAdvertizers.CancelAsync(); };
         }
 
         public static void StartAdvertize()
@@ -60,7 +58,6 @@ namespace Connection
         {
             if (!GetAdvertizers.IsBusy)
             {
-                timeout.Start();
                 GetAdvertizers.RunWorkerAsync();
             }
         }
@@ -68,7 +65,9 @@ namespace Connection
         private static async void Advertize_DoWork(object sender, DoWorkEventArgs e)
         {
             UdpClient server = new UdpClient();
-            server.Connect(IP.AdvertizeBroadcastRecieve);
+            server.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+            server.ExclusiveAddressUse = false;
+            server.Client.Bind(IP.AdvertizeBroadcastRecieve);
 
             while (!e.Cancel)
             {
@@ -87,24 +86,31 @@ namespace Connection
         private static void WhoAmI(object from)
         {
             IPEndPoint to = new IPEndPoint((IPAddress)from, 8994);
-            TcpClient client = new TcpClient(to);
+            TcpClient client = new TcpClient();
+            client.ExclusiveAddressUse = false;
+            client.Connect(to);
+
             NetworkStream stream = client.GetStream();
             binaryFormatter.Serialize(stream, hostConnectionInfo);
             stream.Close();
+            client.Close();
         }
 
         private static void GetAdvertizers_DoWork(object sender, DoWorkEventArgs e)
         {// can fit up to 35-40 connections before timeout
+            Stopwatch getAdvertizersStopwatch = new Stopwatch();
             connections.Clear();
+
             UdpClient client = new UdpClient();
             TcpListener server = new TcpListener(IP.AdvertizeListenRecieve);
+            server.ExclusiveAddressUse = false;
             server.Start();
 
             byte[] msg = Encoding.ASCII.GetBytes("?????");
             client.Send(msg, msg.Length, IP.AdvertizeBroadcastSend);
-            client.Close();
 
-            while (!e.Cancel)
+            getAdvertizersStopwatch.Start();
+            while (getAdvertizersStopwatch.ElapsedMilliseconds <= 4000)
             {
                 if (server.Pending())
                 {
@@ -126,6 +132,7 @@ namespace Connection
                     tcp.Close();
                 }
             }
+            getAdvertizersStopwatch.Stop();
             server.Stop();
         }
     }
@@ -171,9 +178,9 @@ namespace Connection
         public static IPAddress LocalAddress { get { return localAddress = (localAddress != null ? localAddress : GetLocalIP()); } }
 
         public static IPEndPoint AdvertizeBroadcastSend = new IPEndPoint(IPAddress.Broadcast, 8995);
-        public static IPEndPoint AdvertizeBroadcastRecieve = new IPEndPoint(LocalAddress, 8995);
-        public static IPEndPoint AdvertizeListenRecieve = new IPEndPoint(LocalAddress, 8994);
-        public static IPEndPoint GameConnectionRecieve = new IPEndPoint(LocalAddress, 8996);
+        public static IPEndPoint AdvertizeBroadcastRecieve = new IPEndPoint(IPAddress.Any, 8995);
+        public static IPEndPoint AdvertizeListenRecieve = new IPEndPoint(IPAddress.Any, 8994);
+        public static IPEndPoint GameConnectionRecieve = new IPEndPoint(IPAddress.Any, 8996);
     }
 
     static class GameConnection
@@ -181,6 +188,7 @@ namespace Connection
 
     }
 
+    [Serializable]
     public class ConnectionInfo
     {
         public string displayName;

@@ -53,6 +53,7 @@ namespace Connect_Four
                 foreach (ConnectionInfo connection in Advertizer.connections)
                 {
                     ConnectionView connectionView = new ConnectionView(connection);
+                    connectionView.Connect += RequestConnect;
                     ConnectionList.Children.Add(connectionView);
                 }
             }
@@ -69,6 +70,11 @@ namespace Connect_Four
         {
             Advertizer.StartGetAdvertizers();
             BtnReload.IsEnabled = false;
+        }
+
+        private void RequestConnect(object sender, ConnectionInfo connection)
+        {
+
         }
     }
 }
