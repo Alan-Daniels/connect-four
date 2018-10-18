@@ -7,8 +7,8 @@
       mc:Ignorable="d" 
       Height="25" Width="175"
       Background="LightGray">
-    <Button Content="Connect" HorizontalAlignment="Left" Margin="90,3,0,0" VerticalAlignment="Top" Width="75"/>
-    <TextBlock HorizontalAlignment="Left" Margin="10,5,0,0" TextWrapping="Wrap" Text="Name" VerticalAlignment="Top"/>
+    <Button Name="HostName" Content="Connect" HorizontalAlignment="Left" Margin="90,3,0,0" VerticalAlignment="Top" Width="75"/>
+    <TextBlock Name="ConnectHost" HorizontalAlignment="Left" Margin="10,5,0,0" TextWrapping="Wrap" Text="Name" VerticalAlignment="Top"/>
 
 
 </Grid>

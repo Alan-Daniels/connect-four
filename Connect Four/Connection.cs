@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Connection
 {
@@ -18,17 +17,52 @@ namespace Connection
     static class Advertizer
     {
         public static ConnectionInfo hostConnectionInfo;
-        public static readonly BackgroundWorker GetAdvertizers = new BackgroundWorker() { WorkerSupportsCancellation = true};
-        public static readonly BackgroundWorker Advertize = new BackgroundWorker();
+        private static readonly BackgroundWorker GetAdvertizers = new BackgroundWorker() { WorkerSupportsCancellation = true };
+        private static readonly BackgroundWorker Advertize = new BackgroundWorker() { WorkerSupportsCancellation = true };
         private static readonly BinaryFormatter binaryFormatter = new BinaryFormatter();
+
+        public static event RunWorkerCompletedEventHandler AdvertizersGotten { add { GetAdvertizers.RunWorkerCompleted += value; } remove { GetAdvertizers.RunWorkerCompleted -= value; } }
+
+        public static List<ConnectionInfo> connections;
+
         private static readonly System.Timers.Timer timeout = new System.Timers.Timer(4000);
 
         static Advertizer()
         {
+            hostConnectionInfo = new ConnectionInfo()
+            {
+                address = IP.LocalAddress
+            };
+
             connections = new List<ConnectionInfo>();
             GetAdvertizers.DoWork += GetAdvertizers_DoWork;
             Advertize.DoWork += Advertize_DoWork;
             timeout.Elapsed += (object sender, ElapsedEventArgs e) => { timeout.Stop(); GetAdvertizers.CancelAsync(); };
+        }
+
+        public static void StartAdvertize()
+        {
+            if (!Advertize.IsBusy)
+            {
+                Advertize.RunWorkerAsync();
+            }
+        }
+
+        public static void StopAdvertize()
+        {
+            if (Advertize.IsBusy)
+            {
+                Advertize.CancelAsync();
+            }
+        }
+
+        public static void StartGetAdvertizers()
+        {
+            if (!GetAdvertizers.IsBusy)
+            {
+                timeout.Start();
+                GetAdvertizers.RunWorkerAsync();
+            }
         }
 
         private static async void Advertize_DoWork(object sender, DoWorkEventArgs e)
@@ -46,10 +80,6 @@ namespace Connection
                     {
                         new Task(WhoAmI, result.RemoteEndPoint.Address).Start();
                     }
-                    else
-                    {
-
-                    }
                 }
             }
         }
@@ -63,7 +93,6 @@ namespace Connection
             stream.Close();
         }
 
-        public static List<ConnectionInfo> connections;
         private static void GetAdvertizers_DoWork(object sender, DoWorkEventArgs e)
         {// can fit up to 35-40 connections before timeout
             connections.Clear();
@@ -75,7 +104,6 @@ namespace Connection
             client.Send(msg, msg.Length, IP.AdvertizeBroadcastSend);
             client.Close();
 
-            timeout.Start();
             while (!e.Cancel)
             {
                 if (server.Pending())
@@ -100,63 +128,9 @@ namespace Connection
             }
             server.Stop();
         }
-
-        private static void ListenForAdvertizers(ref bool shouldClose, ref ConnectionInfo hostConnectionInfo)
-        {
-            /*
-            byte[] buffer = new byte[1024];
-            string data = string.Empty;
-
-
-            IPAddress ipAddress = IP.GetBroadcastIP();
-            IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 8995);
-
-            // Create a TCP/IP socket.  
-            Socket listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-            listener.Bind(localEndPoint);
-            listener.Listen(MAXSESSIONS);
-
-            while (!shouldClose)
-            {
-                Socket handler = listener.Accept();
-                data = "";
-
-                while (true)
-                {
-                    int bytesRec = handler.Receive(buffer);
-                    data += Encoding.ASCII.GetString(buffer, 0, bytesRec);
-                    if (data.IndexOf(';') > -1)
-                    {
-                        break;
-                    }
-                }
-
-                data = data.ToLower();
-                Console.WriteLine("<" + data);
-
-                if (data.Contains("whoami"))
-                {
-                    string ip = Encoding.ASCII.GetString(hostConnectionInfo.address.GetAddressBytes());
-                    byte[] msg = Encoding.ASCII.GetBytes($"{hostConnectionInfo.displayName}:{ip};");
-                    Console.WriteLine(">" + buffer);
-                    handler.Send(msg);
-                }
-                else
-                {
-                    byte[] msg = Encoding.ASCII.GetBytes("!inv!;");
-                    Console.WriteLine(">" + buffer);
-                    handler.Send(msg);
-                }
-
-                handler.Shutdown(SocketShutdown.Both);
-                handler.Close();
-            }
-            */
-        }
     }
 
-    class IP
+    static class IP
     {
         private static byte[] BroadcastMask { get; } = { 0b11111111, 0b11110000, 0b00000000, 0b00000000 };
         [Obsolete]
@@ -185,13 +159,21 @@ namespace Connection
 
         public static IPAddress GetLocalIP()
         {
-            return Dns.GetHostEntry(Dns.GetHostName()).AddressList[3];
+            using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+            {
+                socket.Connect("8.8.8.8", 65530);
+                IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+                return endPoint.Address;
+            }
         }
 
+        private static IPAddress localAddress;
+        public static IPAddress LocalAddress { get { return localAddress = (localAddress != null ? localAddress : GetLocalIP()); } }
+
         public static IPEndPoint AdvertizeBroadcastSend = new IPEndPoint(IPAddress.Broadcast, 8995);
-        public static IPEndPoint AdvertizeBroadcastRecieve = new IPEndPoint(GetLocalIP(), 8995);
-        public static IPEndPoint AdvertizeListenRecieve = new IPEndPoint(GetLocalIP(), 8994);
-        public static IPEndPoint GameConnectionRecieve = new IPEndPoint(GetLocalIP(), 8996);
+        public static IPEndPoint AdvertizeBroadcastRecieve = new IPEndPoint(LocalAddress, 8995);
+        public static IPEndPoint AdvertizeListenRecieve = new IPEndPoint(LocalAddress, 8994);
+        public static IPEndPoint GameConnectionRecieve = new IPEndPoint(LocalAddress, 8996);
     }
 
     static class GameConnection

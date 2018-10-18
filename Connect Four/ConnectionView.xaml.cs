@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Connection;
 
 namespace Connect_Four
 {
@@ -20,9 +21,12 @@ namespace Connect_Four
     /// </summary>
     public partial class ConnectionView : Grid
     {
-        public ConnectionView()
+        ConnectionInfo connection;
+        public ConnectionView(ConnectionInfo info)
         {
             InitializeComponent();
+            connection = info;
+            HostName.Content = info.displayName;
         }
     }
 }

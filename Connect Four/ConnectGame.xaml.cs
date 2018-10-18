@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Connection;
 
 namespace Connect_Four
 {
@@ -39,27 +40,34 @@ namespace Connect_Four
         public ConnectGame()
         {
             InitializeComponent();
-            Connection.Advertizer.Advertize.RunWorkerAsync();
-            Connection.Advertizer.GetAdvertizers.RunWorkerCompleted += LoadAdvertizers;
+            Advertizer.StartAdvertize();
+            Advertizer.AdvertizersGotten += LoadAdvertizers;
             Unloaded += ConnectGame_Unloaded;
         }
 
         private void LoadAdvertizers(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
+            ConnectionList.Children.Clear();
+            lock (Advertizer.connections)
+            {
+                foreach (ConnectionInfo connection in Advertizer.connections)
+                {
+                    ConnectionView connectionView = new ConnectionView(connection);
+                    ConnectionList.Children.Add(connectionView);
+                }
+            }
             BtnReload.IsEnabled = true;
         }
 
         private void ConnectGame_Unloaded(object sender, RoutedEventArgs e)
         {
-            Connection.Advertizer.Advertize.CancelAsync();
+            Advertizer.StopAdvertize();
+            Advertizer.AdvertizersGotten -= LoadAdvertizers;
         }
 
         private void BtnReload_Click(object sender, RoutedEventArgs e)
         {
-            if (!Connection.Advertizer.GetAdvertizers.IsBusy)
-            {
-                Connection.Advertizer.GetAdvertizers.RunWorkerAsync();
-            }
+            Advertizer.StartGetAdvertizers();
             BtnReload.IsEnabled = false;
         }
     }
