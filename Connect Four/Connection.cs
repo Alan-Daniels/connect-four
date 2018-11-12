@@ -68,7 +68,7 @@ namespace Connection
         public static void SendRequest(ConnectionInfo to)
         {
             //UdpClient udp = new UdpClient(new IPEndPoint(to.address, IP.advertizePort));
-            UdpClient udp = new UdpClient();
+            UdpClient udp = new UdpClient(AddressFamily.InterNetwork);
             IPEndPoint ep = new IPEndPoint(to.address, IP.advertizePort);
             byte[] msg = Encoding.ASCII.GetBytes("!!!!!");
             udp.Send(msg, msg.Length, ep);
@@ -102,7 +102,7 @@ namespace Connection
 
         private static async void Advertize_DoWork(object sender, DoWorkEventArgs e)
         {
-            UdpClient server = new UdpClient();
+            UdpClient server = new UdpClient(AddressFamily.InterNetwork);
             server.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             server.ExclusiveAddressUse = false;
             server.Client.Bind(IP.BroadcastRecieve);
@@ -128,7 +128,7 @@ namespace Connection
         private static void WhoAmI(object from)
         {
             IPEndPoint to = new IPEndPoint((IPAddress)from, IP.advertizePort);
-            TcpClient client = new TcpClient();
+            TcpClient client = new TcpClient(AddressFamily.InterNetwork);
             client.ExclusiveAddressUse = false;
             client.Connect(to);
 
@@ -164,7 +164,7 @@ namespace Connection
             Stopwatch getAdvertizersStopwatch = new Stopwatch();
             connections.Clear();
 
-            UdpClient client = new UdpClient();
+            UdpClient client = new UdpClient(AddressFamily.InterNetwork);
             TcpListener server = new TcpListener(IP.AdvertizeRecieve);
             server.ExclusiveAddressUse = false;
             server.Start();
@@ -312,7 +312,7 @@ namespace Connection
             if (!GameBackgroundWorker.IsBusy)
             {
                 IPEndPoint to = new IPEndPoint(connectionInfo.address, IP.gamePort);
-                TcpClient tcp = new TcpClient();
+                TcpClient tcp = new TcpClient(AddressFamily.InterNetwork);
                 try
                 {
                     tcp.Connect(to);
