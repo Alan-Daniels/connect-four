@@ -2,21 +2,24 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web.Script.Serialization;
 
 namespace Connection
 {
     public delegate void ConnectionEventHandler();
 
-    static class Advertizer
+    public static class Advertizer
     {
-        public static ConnectionInfo hostConnectionInfo;
         private static readonly BackgroundWorker GetAdvertizers = new BackgroundWorker() { WorkerSupportsCancellation = true };
         private static readonly BackgroundWorker Advertize = new BackgroundWorker() { WorkerSupportsCancellation = true };
         private static readonly BinaryFormatter binaryFormatter = new BinaryFormatter();
@@ -27,14 +30,22 @@ namespace Connection
         public static HashSet<ConnectionInfo> InboundReq;
         public static HashSet<ConnectionInfo> OutboundReq;
 
+        public static Func<string> GetNameAction = new Func<string>(()=> { return "Bob"; });
+        private static string GetName()
+        {
+            try
+            {
+                return GetNameAction.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Encountered an exception while grabbing preferred name.\n{ex}");
+                return "Bob";
+            }
+        }
+
         static Advertizer()
         {
-            hostConnectionInfo = new ConnectionInfo()
-            {
-                address = IP.LocalAddress,
-                displayName = "Bob"
-            };
-
             connections = new HashSet<ConnectionInfo>();
             InboundReq = new HashSet<ConnectionInfo>();
             OutboundReq = new HashSet<ConnectionInfo>();
@@ -52,6 +63,15 @@ namespace Connection
                 }
             }
             return null;
+        }
+
+        public static void SendRequest(ConnectionInfo to)
+        {
+            //UdpClient udp = new UdpClient(new IPEndPoint(to.address, IP.advertizePort));
+            UdpClient udp = new UdpClient();
+            IPEndPoint ep = new IPEndPoint(to.address, IP.advertizePort);
+            byte[] msg = Encoding.ASCII.GetBytes("!!!!!");
+            udp.Send(msg, msg.Length, ep);
         }
 
         public static void StartAdvertize()
@@ -97,6 +117,10 @@ namespace Connection
                     {
                         new Task(WhoAmI, result.RemoteEndPoint.Address).Start();
                     }
+                    else if (request.Contains("!"))
+                    {
+                        new Task(AddInboundRequest, result.RemoteEndPoint.Address).Start();
+                    }
                 }
             }
         }
@@ -109,9 +133,30 @@ namespace Connection
             client.Connect(to);
 
             NetworkStream stream = client.GetStream();
-            binaryFormatter.Serialize(stream, hostConnectionInfo);
+            binaryFormatter.Serialize(stream, new ConnectionInfo() {address = IP.LocalAddress, displayName = GetName() });
             stream.Close();
             client.Close();
+        }
+
+        private static void AddInboundRequest(object from)
+        {
+            IPAddress sender = (IPAddress)from;
+            foreach (ConnectionInfo connection in connections)
+            {
+                if (connection.address == sender)
+                {
+                    if (!InboundReq.Contains(connection))
+                    {
+                        InboundReq.Add(connection);
+                        connection.InvokeInboundRequest();
+                    }
+                    else
+                    {
+                        GameConnection.RequestGame(connection);
+                    }
+                    break;
+                }
+            }
         }
 
         private static void GetAdvertizers_DoWork(object sender, DoWorkEventArgs e)
@@ -168,7 +213,7 @@ namespace Connection
         }
 
         private static IPAddress localAddress;
-        public static IPAddress LocalAddress { get { return localAddress = (localAddress != null ? localAddress : GetLocalIP()); } }
+        public static IPAddress LocalAddress { get { return localAddress = localAddress ?? GetLocalIP(); } }
 
         public static int broadcastPort = 8995;
         public static int advertizePort = 8994;
@@ -181,14 +226,224 @@ namespace Connection
         public static IPEndPoint GameRecieve = new IPEndPoint(IPAddress.Any, gamePort);
     }
 
-    static class GameConnection
+    public delegate void GameConnectionEventHandler<T>(object sender, GameConnectionEventArgs<T> e);
+    public class GameConnectionEventArgs<T>
     {
+        public T GameObject { get; }
+        public string BaseMessage { get; }
+        public GameConnectionEventArgs(T GameObject, string BaseMessage)
+        {
+            this.GameObject = GameObject;
+            this.BaseMessage = BaseMessage;
+        }
+    }
 
+    public enum ConnectionType
+    {
+        Disconnected,
+        Server,
+        Client
+    }
+
+    [Serializable]
+    public class Message
+    {
+        public Message(Type type, object data)
+        {
+            Type = type;
+            Data = data;
+        }
+        public Type Type { get; private set; }
+        public object Data { get; private set; }
+    }
+
+    public static class GameConnection
+    {
+        public static event GameConnectionEventHandler<string> MessageRecieved;
+        public static event GameConnectionEventHandler<Point> LocationRecieved;
+        public static event EventHandler GameConnected;
+        public static event EventHandler GameDisconnected;
+        private static readonly BackgroundWorker ListenerBackgroundWorker;
+        private static readonly BackgroundWorker GameBackgroundWorker;
+        public static ConnectionType ConnectionType { get; private set; }
+
+        private static readonly LinkedList<string> messages;
+
+        static GameConnection()
+        {
+            messages = new LinkedList<string>();
+
+            ListenerBackgroundWorker = new BackgroundWorker() { WorkerSupportsCancellation = true };
+            GameBackgroundWorker = new BackgroundWorker();
+            ListenerBackgroundWorker.DoWork += ListenerBackgroundWorker_DoWork;
+            GameBackgroundWorker.DoWork += GameBackgroundWorker_DoWork;
+            GameBackgroundWorker.RunWorkerCompleted += GameBackgroundWorker_RunWorkerCompleted;
+        }
+
+        public static void ListenForGame()
+        {
+            if (!ListenerBackgroundWorker.IsBusy)
+            {
+                ListenerBackgroundWorker.RunWorkerAsync();
+            }
+        }
+
+        public static void StopListening()
+        {
+            if (ListenerBackgroundWorker.IsBusy)
+            {
+                ListenerBackgroundWorker.CancelAsync();
+            }
+        }
+
+        public static void SendMessage(Message message)
+        {
+            messages.AddLast(JsonConvert.Serialise(message));
+        }
+
+        public static void RequestGame(ConnectionInfo connectTo)
+        {
+            new Task(Connect, connectTo).Start();
+        }
+
+        private static void Connect(object connectTo)
+        {
+            ConnectionInfo connectionInfo = (ConnectionInfo)connectTo;
+            if (!GameBackgroundWorker.IsBusy)
+            {
+                IPEndPoint to = new IPEndPoint(connectionInfo.address, IP.gamePort);
+                TcpClient tcp = new TcpClient();
+                try
+                {
+                    tcp.Connect(to);
+                    if (!GameBackgroundWorker.IsBusy)
+                    {
+                        GameBackgroundWorker.RunWorkerAsync(tcp);
+                        ConnectionType = ConnectionType.Client;
+                    }
+                    else
+                    {
+                        tcp.Close();
+                    }
+                }
+                catch (Exception)
+                {
+                    // the connection has failed
+                    throw;
+                }
+            }
+        }
+
+        private static void ListenerBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            TcpListener listener = new TcpListener(IP.GameRecieve) { ExclusiveAddressUse = false };
+            listener.Start();
+            while (!e.Cancel)
+            {
+                if (listener.Pending() && !GameBackgroundWorker.IsBusy)
+                {
+                    TcpClient tcp = listener.AcceptTcpClient();
+                    GameBackgroundWorker.RunWorkerAsync(tcp);
+                    ConnectionType = ConnectionType.Server;
+                }
+            }
+            listener.Stop();
+        }
+
+        private static void GameBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            TcpClient tcp = (TcpClient)e.Argument;
+            ListenerBackgroundWorker.CancelAsync();
+            NetworkStream stream = tcp.GetStream();
+            StreamWriter writer = new StreamWriter(stream);
+            StreamReader reader = new StreamReader(stream);
+            while (tcp.Connected)
+            {
+                RecieveMessages(reader);
+                SendMessages(writer, reader);
+            }
+        }
+
+        private static void RecieveMessages(StreamReader reader)
+        {
+            bool finished = false;
+            string currentString;
+            Message currentMessage;
+            while (!finished)
+            {
+                currentString = reader.ReadLine();
+                if (currentString != null)
+                {
+                    currentMessage = JsonConvert.Deserialise<Message>(currentString);
+                    if (currentMessage.Type == typeof(string))
+                    {
+                        MessageRecieved?.Invoke(null, new GameConnectionEventArgs<string>((string)currentMessage.Data, currentString));
+                    }
+                    else if (currentMessage.Type == typeof(Point))
+                    {
+                        LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>((Point)currentMessage.Data, currentString));
+                    }
+                }
+                else
+                {
+                    finished = true;
+                }
+            }
+        }
+
+        private static void SendMessages(StreamWriter writer, StreamReader reader)
+        {
+            lock (messages)
+            {
+                foreach (var message in messages)
+                {
+                    writer.WriteLine(message);
+                }
+                messages.Clear();
+            }
+            reader.ReadToEnd();
+        }
+
+        private static void GameBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            ConnectionType = ConnectionType.Disconnected;
+            messages.Clear();
+        }
+    }
+
+    public class JsonConvert
+    {
+        public static string Serialise<T>(T input)
+        {
+            JavaScriptSerializer json_serializer = new JavaScriptSerializer();
+            string output = json_serializer.Serialize(input);
+            return output;
+        }
+
+        public static T Deserialise<T>(string input)
+        {
+            JavaScriptSerializer json_serializer = new JavaScriptSerializer();
+            T output = json_serializer.Deserialize<T>(input);
+            return output;
+        }
     }
 
     [Serializable]
     public class ConnectionInfo
     {
+        public event EventHandler InboundRequestRecieved;
+        public event EventHandler OutboundRequestSent;
+
+        public void InvokeInboundRequest()
+        {
+            InboundRequestRecieved?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void InvokeOutboundRequest()
+        {
+            OutboundRequestSent?.Invoke(this, EventArgs.Empty);
+        }
+
         public string displayName;
         public IPAddress address;
     }

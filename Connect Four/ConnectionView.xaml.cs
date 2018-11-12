@@ -26,6 +26,7 @@ namespace Connect_Four
         public event ConnectEventHandler Connect;
         public ConnectionInfo Connection { get; private set; }
         public Brush Fill { get { return root.Background; } set { root.Background = value; } }
+        private State state = State.None;
 
         public ConnectionView(ConnectionInfo info)
         {
@@ -34,11 +35,68 @@ namespace Connect_Four
             HostName.Text = info.displayName;
 
             ConnectHost.Click += ConnectHost_Click;
+            info.InboundRequestRecieved += Info_InboundRequestRecieved;
+            info.OutboundRequestSent += Info_OutboundRequestSent;
+        }
+
+        private void Info_OutboundRequestSent(object sender, EventArgs e)
+        {
+            switch (state)
+            {
+                case State.None:
+                    state = State.Sent;
+                    break;
+                case State.Recieved:
+                    state = State.Both;
+                    break;
+            }
+            UpdateColour();
+        }
+
+        private void Info_InboundRequestRecieved(object sender, EventArgs e)
+        {
+            switch (state)
+            {
+                case State.None:
+                    state = State.Recieved;
+                    break;
+                case State.Sent:
+                    state = State.Both;
+                    break;
+            }
+            UpdateColour();
+        }
+
+        private void UpdateColour()
+        {
+            switch (state)
+            {
+                case State.None:
+                    Background = Brushes.White;
+                    break;
+                case State.Sent:
+                    Background = Brushes.Yellow;
+                    break;
+                case State.Recieved:
+                    Background = Brushes.Blue;
+                    break;
+                case State.Both:
+                    Background = Brushes.Green;
+                    break;
+            }
         }
 
         private void ConnectHost_Click(object sender, RoutedEventArgs e)
         {
             Connect?.Invoke(this, Connection);
+        }
+
+        private enum State
+        {
+            None,
+            Sent,
+            Recieved,
+            Both
         }
     }
 }

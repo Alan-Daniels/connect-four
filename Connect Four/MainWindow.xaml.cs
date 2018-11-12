@@ -8,7 +8,7 @@ namespace Connect_Four
     /// </summary>
     public partial class MainWindow : Window, IGameStateChanger
     {
-        private GameState gameState = GameState.Null;
+        private GameState gameState = GameState.None;
 
         public MainWindow()
         {
@@ -54,7 +54,7 @@ namespace Connect_Four
 
     public enum GameState
     {
-        Null,
+        None,
         Connect,
         Game
     }

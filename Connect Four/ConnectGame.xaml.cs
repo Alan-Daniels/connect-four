@@ -43,6 +43,12 @@ namespace Connect_Four
             Advertizer.StartAdvertize();
             Advertizer.AdvertizersGotten += LoadAdvertizers;
             Unloaded += ConnectGame_Unloaded;
+            Advertizer.GetNameAction = new Func<string>(GetPreferedName);
+        }
+
+        public string GetPreferedName()
+        {
+            return "billy";
         }
 
         private void LoadAdvertizers(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
@@ -76,9 +82,12 @@ namespace Connect_Four
 
         private void RequestConnect(object sender, ConnectionInfo connection)
         {
-            ((ConnectionView)sender).Fill = Brushes.Yellow;
+            //((ConnectionView)sender).Fill = Brushes.Yellow;
             Advertizer.OutboundReq.Add(connection);
+            connection.InvokeOutboundRequest();
 
+            Advertizer.SendRequest(connection);
+            /*
             ConnectionInfo collision = Advertizer.GetFirstRequestPair();
             if (collision != null)
             {
@@ -88,8 +97,9 @@ namespace Connect_Four
             }
             else
             {
-                // lodge the request to the other user
+                // lodge the request to the other user.
             }
+            */
         }
     }
 }

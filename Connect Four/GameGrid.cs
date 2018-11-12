@@ -7,13 +7,13 @@ namespace Connect_Four
 {
     enum CoinType
     {
-        None = 0,
-        Red = -1,
-        Blue = 1
+        None=0,
+        Red=1,
+        Blue=-1
     }
 
     [Serializable]
-    class GameGrid : Canvas
+    public class GameGrid : Canvas
     {
         public static readonly DependencyProperty GridWidthProperty = DependencyProperty.Register("GridWidth", typeof(int), typeof(GameGrid));
         public int GridWidth
@@ -49,7 +49,6 @@ namespace Connect_Four
 
         private CoinType[,] coinGrid;
         private int selectedColumn = 0;
-        private bool YourTurn;
         private readonly CoinTosser coinTosser;
 
         public GameGrid() : base()
