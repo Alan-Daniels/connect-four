@@ -268,13 +268,8 @@ namespace Connection
     [Serializable]
     public class Message
     {
-        public Message(Type type, object data)
-        {
-            Type = type;
-            Data = data;
-        }
-        public Type Type { get; private set; }
-        public object Data { get; private set; }
+        public string Type { get; set; }
+        public object Data { get; set; }
     }
 
     public static class GameConnection
@@ -404,11 +399,11 @@ namespace Connection
                 if (currentString != null)
                 {
                     currentMessage = JsonConvert.Deserialise<Message>(currentString);
-                    if (currentMessage.Type == typeof(string))
+                    if (currentMessage.Type == typeof(string).ToString())
                     {
                         MessageRecieved?.Invoke(null, new GameConnectionEventArgs<string>((string)currentMessage.Data, currentString));
                     }
-                    else if (currentMessage.Type == typeof(Point))
+                    else if (currentMessage.Type == typeof(Point).ToString())
                     {
                         LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>((Point)currentMessage.Data, currentString));
                     }
