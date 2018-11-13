@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Windows;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -11,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Script.Serialization;
+using System.Windows;
 
 namespace Connection
 {
@@ -313,7 +313,10 @@ namespace Connection
 
         public static void SendMessage(Message message)
         {
-            messages.AddLast(JsonConvert.Serialise(message));
+            lock (messages)
+            {
+                messages.AddLast(JsonConvert.Serialise(message));
+            }
         }
 
         public static void RequestGame(ConnectionInfo connectTo)
@@ -375,15 +378,12 @@ namespace Connection
             StreamReader reader = new StreamReader(stream);
             while (tcp.Connected)
             {
-                try
+                if (tcp.Available > 0)
                 {
                     RecieveMessages(reader);
-                    SendMessages(writer, reader);
                 }
-                catch (IOException)// will happen when the stream is force-closed by the opponent closing the client.
-                {
-                    tcp.Close();
-                }
+                SendMessages(writer, reader);
+                Thread.Sleep(50);
             }
             GameDisconnected?.Invoke(null, null);
         }
@@ -417,15 +417,16 @@ namespace Connection
 
         private static void SendMessages(StreamWriter writer, StreamReader reader)
         {
+            bool written = false;
             lock (messages)
             {
                 foreach (var message in messages)
                 {
                     writer.WriteLine(message);
+                    written = true;
                 }
                 messages.Clear();
             }
-            reader.ReadToEnd();
         }
 
         private static void GameBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
