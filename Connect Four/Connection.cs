@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
+using System.Windows;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -34,7 +34,7 @@ namespace Connection
         {
             try
             {
-                return System.Windows.Application.Current.Dispatcher.Invoke(GetNameAction);
+                return Application.Current.Dispatcher.Invoke(GetNameAction);
             }
             catch (Exception ex)
             {
@@ -235,9 +235,9 @@ namespace Connection
         private static IPAddress localAddress;
         public static IPAddress LocalAddress { get { return localAddress = localAddress ?? GetLocalIP(); } }
 
-        public static int broadcastPort = 8995;
-        public static int advertizePort = 8994;
-        public static int gamePort = 8996;
+        public static int broadcastPort = Connect_Four.Properties.Settings.Default.AdvertizeUdp;
+        public static int advertizePort = Connect_Four.Properties.Settings.Default.AdvertizeTcp;
+        public static int gamePort = Connect_Four.Properties.Settings.Default.GameTcp;
 
         public static IPEndPoint BroadcastSend = new IPEndPoint(IPAddress.Broadcast, broadcastPort);
         public static IPEndPoint BroadcastRecieve = new IPEndPoint(IPAddress.Any, broadcastPort);
@@ -380,8 +380,15 @@ namespace Connection
             StreamReader reader = new StreamReader(stream);
             while (tcp.Connected)
             {
-                RecieveMessages(reader);
-                SendMessages(writer, reader);
+                try
+                {
+                    RecieveMessages(reader);
+                    SendMessages(writer, reader);
+                }
+                catch (IOException)// will happen when the stream is force-closed by the opponent closing the client.
+                {
+                    tcp.Close();
+                }
             }
             GameDisconnected?.Invoke(null, null);
         }

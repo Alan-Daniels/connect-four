@@ -25,28 +25,28 @@ namespace Connect_Four.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("8995")]
-        public int AvdertizementPort {
+        [global::System.Configuration.DefaultSettingValueAttribute("2385")]
+        public int AdvertizeTcp {
             get {
-                return ((int)(this["AvdertizementPort"]));
+                return ((int)(this["AdvertizeTcp"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("8994")]
-        public int GamePort {
+        [global::System.Configuration.DefaultSettingValueAttribute("2386")]
+        public int GameTcp {
             get {
-                return ((int)(this["GamePort"]));
+                return ((int)(this["GameTcp"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("8996")]
-        public int BroadcastPort {
+        [global::System.Configuration.DefaultSettingValueAttribute("2387")]
+        public int AdvertizeUdp {
             get {
-                return ((int)(this["BroadcastPort"]));
+                return ((int)(this["AdvertizeUdp"]));
             }
         }
     }

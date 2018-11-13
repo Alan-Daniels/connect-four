@@ -7,9 +7,9 @@ namespace Connect_Four
 {
     enum CoinType
     {
-        None=0,
-        Red=1,
-        Blue=-1
+        None = 0,
+        Red = 1,
+        Blue = -1
     }
 
     [Serializable]
@@ -62,6 +62,7 @@ namespace Connect_Four
         private void GameGrid_Loaded(object sender, RoutedEventArgs e)
         {
             Size gs = GridSize;
+            var source = new BitmapImage(new Uri("pack://siteoforigin:,,,/Images/boardSegment.png"));
             for (int x = 0; x < GridWidth; x++)
             {
                 for (int y = 1; y < GridHeight + 1; y++)
@@ -69,9 +70,9 @@ namespace Connect_Four
                     {
                         Image img = new Image()
                         {
-                            Source = new BitmapImage(new Uri("pack://siteoforigin:,,,/Images/boardSegment.png")),
-                            Width = gs.Width+0.55,
-                            Height = gs.Height+0.55
+                            Source = source,
+                            Width = gs.Width + 0.55,
+                            Height = gs.Height + 0.55
                         };
                         Children.Add(img);
                         SetLeft(img, x * gs.Width);
@@ -82,6 +83,15 @@ namespace Connect_Four
             }
             coinTosser.Create(CoinType.Red, GridSize);
             coinGrid = new CoinType[GridWidth, GridHeight];
+            Connection.GameConnection.LocationRecieved += GameConnection_LocationRecieved;
+        }
+
+        private void GameConnection_LocationRecieved(object sender, Connection.GameConnectionEventArgs<Point> e)
+        {
+            Point point = e.GameObject;
+            coinTosser.Move(point, GridSize, TimeSpan.FromMilliseconds(100 * point.Y));
+            coinGrid[selectedColumn, (int)point.Y - 1] = coinTosser.CoinType;
+            coinTosser.Create((CoinType)((int)coinTosser.CoinType * -1), GridSize);
         }
 
         private void GameGrid_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -104,9 +114,11 @@ namespace Connect_Four
             int y = GetHeight(selectedColumn);
             if (y != -1)
             {
-                coinTosser.Move(new Point(selectedColumn, y), GridSize, TimeSpan.FromMilliseconds(100 * y));
+                Point point = new Point(selectedColumn, y);
+                coinTosser.Move(point, GridSize, TimeSpan.FromMilliseconds(100 * y));
                 coinGrid[selectedColumn, y - 1] = coinTosser.CoinType;
-                coinTosser.Create((CoinType)((int)coinTosser.CoinType*-1), GridSize);
+                coinTosser.Create((CoinType)((int)coinTosser.CoinType * -1), GridSize);
+                Connection.GameConnection.SendMessage(new Connection.Message(typeof(Point), point));
             }
         }
 

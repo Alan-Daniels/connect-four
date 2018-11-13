@@ -2,14 +2,14 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Connect_Four.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="AvdertizementPort" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">8995</Value>
+    <Setting Name="AdvertizeTcp" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">2385</Value>
     </Setting>
-    <Setting Name="GamePort" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">8994</Value>
+    <Setting Name="GameTcp" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">2386</Value>
     </Setting>
-    <Setting Name="BroadcastPort" Type="System.Int32" Scope="Application">
-      <Value Profile="(Default)">8996</Value>
+    <Setting Name="AdvertizeUdp" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">2387</Value>
     </Setting>
   </Settings>
 </SettingsFile>
