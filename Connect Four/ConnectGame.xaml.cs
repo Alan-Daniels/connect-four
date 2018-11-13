@@ -42,6 +42,7 @@ namespace Connect_Four
             InitializeComponent();
             Advertizer.StartAdvertize();
             Advertizer.AdvertizersGotten += LoadAdvertizers;
+            Advertizer.NewConnection += (object s, ConnectionInfo e) => { AddConnection(e); };
             Unloaded += ConnectGame_Unloaded;
             Advertizer.GetNameAction = new Func<string>(GetPreferedName);
         }

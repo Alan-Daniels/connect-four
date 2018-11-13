@@ -23,12 +23,13 @@ namespace Connection
         private static readonly BinaryFormatter binaryFormatter = new BinaryFormatter();
 
         public static event RunWorkerCompletedEventHandler AdvertizersGotten { add { GetAdvertizers.RunWorkerCompleted += value; } remove { GetAdvertizers.RunWorkerCompleted -= value; } }
+        public static event EventHandler<ConnectionInfo> NewConnection;
 
         public static HashSet<ConnectionInfo> connections;
         public static HashSet<ConnectionInfo> InboundReq;
         public static HashSet<ConnectionInfo> OutboundReq;
 
-        public static Func<string> GetNameAction = new Func<string>(()=> { return "Bob"; });
+        public static Func<string> GetNameAction = new Func<string>(() => { return "Bob"; });
         private static string GetName()
         {
             try
@@ -146,10 +147,12 @@ namespace Connection
         private static void AddInboundRequest(object from)
         {
             IPAddress sender = (IPAddress)from;
+            bool found = false;
             foreach (ConnectionInfo connection in connections)
             {
                 if (connection.address == sender)
                 {
+                    found = true;
                     if (!InboundReq.Contains(connection))
                     {
                         InboundReq.Add(connection);
@@ -161,6 +164,19 @@ namespace Connection
                     }
                     break;
                 }
+            }
+
+            if (found == false && NewConnection != null)
+            {
+                ConnectionInfo connection = new ConnectionInfo() { address = sender, displayName = "Unknown" };
+                connections.Add(connection);
+                InboundReq.Add(connection);
+                NewConnection.Invoke(null, connection);
+                connection.InvokeInboundRequest();
+            }
+            else
+            {
+                Console.WriteLine($"Could not add inbound connection {sender} as no new connections could be made.");
             }
         }
 
