@@ -50,7 +50,7 @@ namespace Connect_Four
                     state = State.Both;
                     break;
             }
-            UpdateColour();
+            Application.Current.Dispatcher.Invoke(UpdateColour);
         }
 
         private void Info_InboundRequestRecieved(object sender, EventArgs e)
@@ -64,7 +64,7 @@ namespace Connect_Four
                     state = State.Both;
                     break;
             }
-            UpdateColour();
+            Application.Current.Dispatcher.Invoke(UpdateColour);
         }
 
         private void UpdateColour()

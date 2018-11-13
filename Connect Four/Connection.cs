@@ -6,9 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,7 +33,7 @@ namespace Connection
         {
             try
             {
-                return GetNameAction.Invoke();
+                return System.Windows.Application.Current.Dispatcher.Invoke(GetNameAction);
             }
             catch (Exception ex)
             {
@@ -69,7 +67,7 @@ namespace Connection
         {
             //UdpClient udp = new UdpClient(new IPEndPoint(to.address, IP.advertizePort));
             UdpClient udp = new UdpClient(AddressFamily.InterNetwork);
-            IPEndPoint ep = new IPEndPoint(to.address, IP.advertizePort);
+            IPEndPoint ep = new IPEndPoint(to.address, IP.broadcastPort);
             byte[] msg = Encoding.ASCII.GetBytes("!!!!!");
             udp.Send(msg, msg.Length, ep);
         }
@@ -133,7 +131,14 @@ namespace Connection
             client.Connect(to);
 
             NetworkStream stream = client.GetStream();
-            binaryFormatter.Serialize(stream, new ConnectionInfo() {address = IP.LocalAddress, displayName = GetName() });
+            if (to.Address.Equals(IP.LocalAddress))
+            {
+                binaryFormatter.Serialize(stream, new ConnectionInfo() { address = IP.LocalAddress, displayName = "Me" });
+            }
+            else
+            {
+                binaryFormatter.Serialize(stream, new ConnectionInfo() { address = IP.LocalAddress, displayName = GetName() });
+            }
             stream.Close();
             client.Close();
         }

@@ -48,7 +48,7 @@ namespace Connect_Four
 
         public string GetPreferedName()
         {
-            return "billy";
+            return NameBox.Text.Trim();
         }
 
         private void LoadAdvertizers(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
@@ -58,13 +58,18 @@ namespace Connect_Four
             {
                 foreach (ConnectionInfo connection in Advertizer.connections)
                 {
-                    ConnectionView connectionView = new ConnectionView(connection);
-                    connectionView.Connect += RequestConnect;
-                    ConnectionList.Children.Add(connectionView);
+                    AddConnection(connection);
                 }
             }
             BtnReload.IsEnabled = true;
             ConnectionList.IsEnabled = true;
+        }
+
+        public void AddConnection(ConnectionInfo connection)
+        {
+            ConnectionView connectionView = new ConnectionView(connection);
+            connectionView.Connect += RequestConnect;
+            ConnectionList.Children.Add(connectionView);
         }
 
         private void ConnectGame_Unloaded(object sender, RoutedEventArgs e)
