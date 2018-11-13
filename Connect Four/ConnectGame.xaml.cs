@@ -15,14 +15,14 @@ namespace Connect_Four
 
         public IGameStateChanger GameStateChanger
         {
-            get { return (IGameStateChanger)dependencyObject.GetValue(GameStateChangerProperty); }
-            set { dependencyObject.SetValue(GameStateChangerProperty, value); }
+            get { return (IGameStateChanger)Application.Current.Dispatcher.Invoke((Func<DependencyProperty, object>)dependencyObject.GetValue, GameStateChangerProperty); }
+            set { Application.Current.Dispatcher.Invoke((Action<DependencyProperty, object>)dependencyObject.SetValue, GameStateChangerProperty, value); }
         }
 
         public GameState GameState
         {
-            get { return GameStateChanger.GetState(); }
-            set { GameStateChanger.SetState(value, null); }
+            get { return Application.Current.Dispatcher.Invoke(GameStateChanger.GetState); }
+            set { Application.Current.Dispatcher.Invoke((Action<GameState, object>)GameStateChanger.SetState, value, null); }
         }
 
         public ConnectGame()
