@@ -150,7 +150,7 @@ namespace Connection
             bool found = false;
             foreach (ConnectionInfo connection in connections)
             {
-                if (connection.address == sender)
+                if (connection.address.Equals(sender))
                 {
                     found = true;
                     if (!InboundReq.Contains(connection))
