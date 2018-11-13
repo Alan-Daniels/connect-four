@@ -378,10 +378,7 @@ namespace Connection
             StreamReader reader = new StreamReader(stream);
             while (tcp.Connected)
             {
-                if (tcp.Available > 0)
-                {
-                    RecieveMessages(reader);
-                }
+                RecieveMessages(reader);
                 SendMessages(writer, reader);
                 Thread.Sleep(50);
             }
@@ -393,7 +390,7 @@ namespace Connection
             bool finished = false;
             string currentString;
             Message currentMessage;
-            while (!finished)
+            while (!finished && reader.Peek() >= 0)
             {
                 currentString = reader.ReadLine();
                 if (currentString != null)
