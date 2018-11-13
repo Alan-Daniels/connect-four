@@ -66,7 +66,6 @@ namespace Connection
 
         public static void SendRequest(ConnectionInfo to)
         {
-            //UdpClient udp = new UdpClient(new IPEndPoint(to.address, IP.advertizePort));
             UdpClient udp = new UdpClient(AddressFamily.InterNetwork);
             IPEndPoint ep = new IPEndPoint(to.address, IP.broadcastPort);
             byte[] msg = Encoding.ASCII.GetBytes("!!!!!");
@@ -375,6 +374,7 @@ namespace Connection
         {
             TcpClient tcp = (TcpClient)e.Argument;
             ListenerBackgroundWorker.CancelAsync();
+            GameConnected?.Invoke(null, null);
             NetworkStream stream = tcp.GetStream();
             StreamWriter writer = new StreamWriter(stream);
             StreamReader reader = new StreamReader(stream);
@@ -383,6 +383,7 @@ namespace Connection
                 RecieveMessages(reader);
                 SendMessages(writer, reader);
             }
+            GameDisconnected?.Invoke(null, null);
         }
 
         private static void RecieveMessages(StreamReader reader)
