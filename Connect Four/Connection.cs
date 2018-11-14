@@ -105,10 +105,10 @@ namespace Connection
             server.ExclusiveAddressUse = false;
             server.Client.Bind(IP.BroadcastRecieve);
 
-            while (!e.Cancel)
+            while (!Advertize.CancellationPending)
             {
                 UdpReceiveResult result = await server.ReceiveAsync();
-                if (!e.Cancel)
+                if (!Advertize.CancellationPending)
                 {
                     string request = Encoding.ASCII.GetString(result.Buffer);
                     if (request.Contains("?"))
@@ -280,6 +280,10 @@ namespace Connection
         public static event EventHandler GameDisconnected;
         private static readonly BackgroundWorker ListenerBackgroundWorker;
         private static readonly BackgroundWorker GameBackgroundWorker;
+
+        private static readonly BackgroundWorker GameReader;
+        private static readonly BackgroundWorker GameWriter;
+
         public static ConnectionType ConnectionType { get; private set; }
 
         private static readonly LinkedList<string> messages;
@@ -289,6 +293,9 @@ namespace Connection
             messages = new LinkedList<string>();
 
             ListenerBackgroundWorker = new BackgroundWorker() { WorkerSupportsCancellation = true };
+            GameReader = new BackgroundWorker() { WorkerSupportsCancellation = true };
+            GameWriter = new BackgroundWorker() { WorkerSupportsCancellation = true };
+
             GameBackgroundWorker = new BackgroundWorker();
             ListenerBackgroundWorker.DoWork += ListenerBackgroundWorker_DoWork;
             GameBackgroundWorker.DoWork += GameBackgroundWorker_DoWork;
@@ -356,7 +363,7 @@ namespace Connection
         {
             TcpListener listener = new TcpListener(IP.GameRecieve) { ExclusiveAddressUse = false };
             listener.Start();
-            while (!e.Cancel)
+            while (!ListenerBackgroundWorker.CancellationPending)
             {
                 if (listener.Pending() && !GameBackgroundWorker.IsBusy)
                 {
@@ -374,55 +381,75 @@ namespace Connection
             ListenerBackgroundWorker.CancelAsync();
             GameConnected?.Invoke(null, null);
             NetworkStream stream = tcp.GetStream();
-            StreamWriter writer = new StreamWriter(stream);
-            StreamReader reader = new StreamReader(stream);
-            while (tcp.Connected)
+
+            Task[] tasks = new Task[] { new Task(new Action<object>(RecieveMessages), stream), new Task(new Action<object>(SendMessages), stream) };
+            foreach (Task task in tasks)
             {
-                RecieveMessages(reader);
-                SendMessages(writer, reader);
-                Thread.Sleep(50);
+                task.Start();
             }
+            while (!e.Cancel)
+            {
+                //twiddle thumbs
+            }
+            stream.Close();
+            foreach (Task task in tasks)
+            {
+                task.Dispose();
+            }
+            stream.Dispose();
+            tcp.Close();
+            tcp.Dispose();
             GameDisconnected?.Invoke(null, null);
         }
 
-        private static void RecieveMessages(StreamReader reader)
+        private static void RecieveMessages(object objStream)
         {
-            bool finished = false;
+            var stream = (NetworkStream)objStream;
+            var reader = new StreamReader(stream);
             string currentString;
             Message currentMessage;
-            while (!finished && reader.Peek() >= 0)
+
+            while (stream.CanRead)
             {
-                currentString = reader.ReadLine();
-                if (currentString != null)
+                try
                 {
-                    currentMessage = JsonConvert.Deserialise<Message>(currentString);
-                    if (currentMessage.Type == typeof(string).ToString())
+                    currentString = reader.ReadLine();
+                    if (currentString != null)
                     {
-                        MessageRecieved?.Invoke(null, new GameConnectionEventArgs<string>((string)currentMessage.Data, currentString));
-                    }
-                    else if (currentMessage.Type == typeof(Point).ToString())
-                    {
-                        LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>((Point)currentMessage.Data, currentString));
+                        currentMessage = JsonConvert.Deserialise<Message>(currentString);
+                        if (currentMessage.Type == typeof(string).ToString())
+                        {
+                            MessageRecieved?.Invoke(null, new GameConnectionEventArgs<string>((string)currentMessage.Data, currentString));
+                        }
+                        else if (currentMessage.Type == typeof(Point).ToString())
+                        {
+                            LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>((Point)currentMessage.Data, currentString));
+                        }
                     }
                 }
-                else
+                catch (IOException)
                 {
-                    finished = true;
+                    // if the connection breaks.
                 }
             }
         }
 
-        private static void SendMessages(StreamWriter writer, StreamReader reader)
+        private static void SendMessages(object objStream)
         {
-            bool written = false;
-            lock (messages)
+            var stream = (NetworkStream)objStream;
+            var writer = new StreamWriter(stream);
+
+            while (stream.CanWrite)
             {
-                foreach (var message in messages)
+                lock (messages)
                 {
-                    writer.WriteLine(message);
-                    written = true;
+                    foreach (var message in messages)
+                    {
+                        writer.WriteLine(message);
+                    }
+                    messages.Clear();
                 }
-                messages.Clear();
+                Thread.Sleep(150);
             }
         }
 
