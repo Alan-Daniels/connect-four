@@ -374,8 +374,9 @@ namespace Connection
             ListenerBackgroundWorker.CancelAsync();
             GameConnected?.Invoke(null, null);
             NetworkStream stream = tcp.GetStream();
-            stream.ReadTimeout = 300;
+            stream.ReadTimeout = 1200;
             StreamWriter writer = new StreamWriter(stream);
+            writer.AutoFlush = true;
             StreamReader reader = new StreamReader(stream);
             while (tcp.Connected)
             {
@@ -401,16 +402,19 @@ namespace Connection
                 {
                     currentString = null;
                 }
-                if (currentString != null)
+                if (!(currentString == null || currentString == ""))
                 {
                     currentMessage = JsonConvert.Deserialise<Message<object>>(currentString);
-                    if (currentMessage.Type == typeof(string).ToString())
+                    if (currentMessage != default(Message<object>))
                     {
-                        MessageRecieved?.Invoke(null, new GameConnectionEventArgs<string>(JsonConvert.Deserialise<Message<string>>(currentString).Data, currentString));
-                    }
-                    else if (currentMessage.Type == typeof(Point).ToString())
-                    {
-                        LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>(JsonConvert.Deserialise<Message<Point>>(currentString).Data, currentString));
+                        if (currentMessage.Type == typeof(string).ToString())
+                        {
+                            MessageRecieved?.Invoke(null, new GameConnectionEventArgs<string>(JsonConvert.Deserialise<Message<string>>(currentString).Data, currentString));
+                        }
+                        else if (currentMessage.Type == typeof(Point).ToString())
+                        {
+                            LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>(JsonConvert.Deserialise<Message<Point>>(currentString).Data, currentString));
+                        }
                     }
                 }
                 else
@@ -452,9 +456,16 @@ namespace Connection
 
         public static T Deserialise<T>(string input)
         {
-            JavaScriptSerializer json_serializer = new JavaScriptSerializer();
-            T output = json_serializer.Deserialize<T>(input);
-            return output;
+            try
+            {
+                JavaScriptSerializer json_serializer = new JavaScriptSerializer();
+                T output = json_serializer.Deserialize<T>(input);
+                return output;
+            }
+            catch (Exception)
+            {
+                return default(T);
+            }
         }
     }
 

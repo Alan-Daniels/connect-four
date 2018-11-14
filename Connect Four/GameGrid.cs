@@ -89,6 +89,11 @@ namespace Connect_Four
         private void GameConnection_LocationRecieved(object sender, Connection.GameConnectionEventArgs<Point> e)
         {
             Point point = e.GameObject;
+            Application.Current.Dispatcher.Invoke((Action<Point>)DropCoin, point);
+        }
+
+        private void DropCoin(Point point)
+        {
             coinTosser.Move(point, GridSize, TimeSpan.FromMilliseconds(100 * point.Y));
             coinGrid[selectedColumn, (int)point.Y - 1] = coinTosser.CoinType;
             coinTosser.Create((CoinType)((int)coinTosser.CoinType * -1), GridSize);
