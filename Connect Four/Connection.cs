@@ -319,6 +319,7 @@ namespace Connection
                         {
                             writer.WriteLine(message);
                         }
+                        messages.Clear();
                     }
                 }
                 Thread.Sleep(150);
