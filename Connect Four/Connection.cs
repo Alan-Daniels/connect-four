@@ -105,10 +105,10 @@ namespace Connection
             server.ExclusiveAddressUse = false;
             server.Client.Bind(IP.BroadcastRecieve);
 
-            while (!Advertize.CancellationPending)
+            while (!e.Cancel)
             {
                 UdpReceiveResult result = await server.ReceiveAsync();
-                if (!Advertize.CancellationPending)
+                if (!e.Cancel)
                 {
                     string request = Encoding.ASCII.GetString(result.Buffer);
                     if (request.Contains("?"))
@@ -280,10 +280,6 @@ namespace Connection
         public static event EventHandler GameDisconnected;
         private static readonly BackgroundWorker ListenerBackgroundWorker;
         private static readonly BackgroundWorker GameBackgroundWorker;
-
-        private static readonly BackgroundWorker GameReader;
-        private static readonly BackgroundWorker GameWriter;
-
         public static ConnectionType ConnectionType { get; private set; }
 
         private static readonly LinkedList<string> messages;
@@ -293,9 +289,6 @@ namespace Connection
             messages = new LinkedList<string>();
 
             ListenerBackgroundWorker = new BackgroundWorker() { WorkerSupportsCancellation = true };
-            GameReader = new BackgroundWorker() { WorkerSupportsCancellation = true };
-            GameWriter = new BackgroundWorker() { WorkerSupportsCancellation = true };
-
             GameBackgroundWorker = new BackgroundWorker();
             ListenerBackgroundWorker.DoWork += ListenerBackgroundWorker_DoWork;
             GameBackgroundWorker.DoWork += GameBackgroundWorker_DoWork;
@@ -363,7 +356,7 @@ namespace Connection
         {
             TcpListener listener = new TcpListener(IP.GameRecieve) { ExclusiveAddressUse = false };
             listener.Start();
-            while (!ListenerBackgroundWorker.CancellationPending)
+            while (!e.Cancel)
             {
                 if (listener.Pending() && !GameBackgroundWorker.IsBusy)
                 {
@@ -381,75 +374,55 @@ namespace Connection
             ListenerBackgroundWorker.CancelAsync();
             GameConnected?.Invoke(null, null);
             NetworkStream stream = tcp.GetStream();
-
-            Task[] tasks = new Task[] { new Task(new Action<object>(RecieveMessages), stream), new Task(new Action<object>(SendMessages), stream) };
-            foreach (Task task in tasks)
+            StreamWriter writer = new StreamWriter(stream);
+            StreamReader reader = new StreamReader(stream);
+            while (tcp.Connected)
             {
-                task.Start();
+                RecieveMessages(reader);
+                SendMessages(writer, reader);
+                Thread.Sleep(50);
             }
-            while (!e.Cancel)
-            {
-                //twiddle thumbs
-            }
-            stream.Close();
-            foreach (Task task in tasks)
-            {
-                task.Dispose();
-            }
-            stream.Dispose();
-            tcp.Close();
-            tcp.Dispose();
             GameDisconnected?.Invoke(null, null);
         }
 
-        private static void RecieveMessages(object objStream)
+        private static void RecieveMessages(StreamReader reader)
         {
-            var stream = (NetworkStream)objStream;
-            var reader = new StreamReader(stream);
+            bool finished = false;
             string currentString;
             Message currentMessage;
-
-            while (stream.CanRead)
+            while (!finished && reader.Peek() >= 0)
             {
-                try
+                currentString = reader.ReadLine();
+                if (currentString != null)
                 {
-                    currentString = reader.ReadLine();
-                    if (currentString != null)
+                    currentMessage = JsonConvert.Deserialise<Message>(currentString);
+                    if (currentMessage.Type == typeof(string).ToString())
                     {
-                        currentMessage = JsonConvert.Deserialise<Message>(currentString);
-                        if (currentMessage.Type == typeof(string).ToString())
-                        {
-                            MessageRecieved?.Invoke(null, new GameConnectionEventArgs<string>((string)currentMessage.Data, currentString));
-                        }
-                        else if (currentMessage.Type == typeof(Point).ToString())
-                        {
-                            LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>((Point)currentMessage.Data, currentString));
-                        }
+                        MessageRecieved?.Invoke(null, new GameConnectionEventArgs<string>((string)currentMessage.Data, currentString));
+                    }
+                    else if (currentMessage.Type == typeof(Point).ToString())
+                    {
+                        LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>((Point)currentMessage.Data, currentString));
                     }
                 }
-                catch (IOException)
+                else
                 {
-                    // if the connection breaks.
+                    finished = true;
                 }
             }
         }
 
-        private static void SendMessages(object objStream)
+        private static void SendMessages(StreamWriter writer, StreamReader reader)
         {
-            var stream = (NetworkStream)objStream;
-            var writer = new StreamWriter(stream);
-
-            while (stream.CanWrite)
+            bool written = false;
+            lock (messages)
             {
-                lock (messages)
+                foreach (var message in messages)
                 {
-                    foreach (var message in messages)
-                    {
-                        writer.WriteLine(message);
-                    }
-                    messages.Clear();
+                    writer.WriteLine(message);
+                    written = true;
                 }
-                Thread.Sleep(150);
+                messages.Clear();
             }
         }
 
