@@ -266,10 +266,10 @@ namespace Connection
     }
 
     [Serializable]
-    public class Message
+    public class Message<T>
     {
         public string Type { get; set; }
-        public object Data { get; set; }
+        public T Data { get; set; }
     }
 
     public static class GameConnection
@@ -311,7 +311,7 @@ namespace Connection
             }
         }
 
-        public static void SendMessage(Message message)
+        public static void SendMessage(Message<object> message)
         {
             lock (messages)
             {
@@ -381,7 +381,7 @@ namespace Connection
             {
                 RecieveMessages(reader);
                 SendMessages(writer, reader);
-                Thread.Sleep(50);
+                Thread.Sleep(500);
             }
             GameDisconnected?.Invoke(null, null);
         }
@@ -390,7 +390,7 @@ namespace Connection
         {
             bool finished = false;
             string currentString;
-            Message currentMessage;
+            Message<object> currentMessage;
             while (!finished)
             {
                 try
@@ -403,14 +403,14 @@ namespace Connection
                 }
                 if (currentString != null)
                 {
-                    currentMessage = JsonConvert.Deserialise<Message>(currentString);
+                    currentMessage = JsonConvert.Deserialise<Message<object>>(currentString);
                     if (currentMessage.Type == typeof(string).ToString())
                     {
-                        MessageRecieved?.Invoke(null, new GameConnectionEventArgs<string>((string)currentMessage.Data, currentString));
+                        MessageRecieved?.Invoke(null, new GameConnectionEventArgs<string>(JsonConvert.Deserialise<Message<string>>(currentString).Data, currentString));
                     }
                     else if (currentMessage.Type == typeof(Point).ToString())
                     {
-                        LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>((Point)currentMessage.Data, currentString));
+                        LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>(JsonConvert.Deserialise<Message<Point>>(currentString).Data, currentString));
                     }
                 }
                 else

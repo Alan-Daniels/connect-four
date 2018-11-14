@@ -118,7 +118,7 @@ namespace Connect_Four
                 coinTosser.Move(point, GridSize, TimeSpan.FromMilliseconds(100 * y));
                 coinGrid[selectedColumn, y - 1] = coinTosser.CoinType;
                 coinTosser.Create((CoinType)((int)coinTosser.CoinType * -1), GridSize);
-                Connection.GameConnection.SendMessage(new Connection.Message() { Type = typeof(Point).ToString(), Data = point });
+                Connection.GameConnection.SendMessage(new Connection.Message<object>() { Type = typeof(Point).ToString(), Data = point });
             }
         }
 
