@@ -94,6 +94,7 @@ namespace Connect_Four
 
         private void DropCoin(Point point)
         {
+            coinTosser.Move(new Point(point.X, 0), GridSize, TimeSpan.FromMilliseconds(1));
             coinTosser.Move(point, GridSize, TimeSpan.FromMilliseconds(100 * point.Y));
             coinGrid[selectedColumn, (int)point.Y - 1] = coinTosser.CoinType;
             coinTosser.Create((CoinType)((int)coinTosser.CoinType * -1), GridSize);

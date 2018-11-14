@@ -309,6 +309,7 @@ namespace Connection
         private static void GameWriter_DoWork(object sender, DoWorkEventArgs e)
         {
             var writer = (StreamWriter)e.Argument;
+            writer.AutoFlush = true;
             while (!GameWriter.CancellationPending)
             {
                 if (messages.Count > 0)
@@ -340,6 +341,7 @@ namespace Connection
                 catch (IOException)
                 {
                     currentString = null;
+                    StopGame();
                 }
 
                 if (!(currentString == null || currentString == ""))
