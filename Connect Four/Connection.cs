@@ -374,6 +374,7 @@ namespace Connection
             ListenerBackgroundWorker.CancelAsync();
             GameConnected?.Invoke(null, null);
             NetworkStream stream = tcp.GetStream();
+            stream.ReadTimeout = 300;
             StreamWriter writer = new StreamWriter(stream);
             StreamReader reader = new StreamReader(stream);
             while (tcp.Connected)
@@ -390,7 +391,7 @@ namespace Connection
             bool finished = false;
             string currentString;
             Message currentMessage;
-            while (!finished && reader.Peek() >= 0)
+            while (!finished)
             {
                 currentString = reader.ReadLine();
                 if (currentString != null)
@@ -414,15 +415,15 @@ namespace Connection
 
         private static void SendMessages(StreamWriter writer, StreamReader reader)
         {
-            bool written = false;
-            lock (messages)
+            if (messages.Count > 0)
             {
-                foreach (var message in messages)
+                lock (messages)
                 {
-                    writer.WriteLine(message);
-                    written = true;
+                    foreach (var message in messages)
+                    {
+                        writer.WriteLine(message);
+                    }
                 }
-                messages.Clear();
             }
         }
 
