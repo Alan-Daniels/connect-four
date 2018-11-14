@@ -96,7 +96,7 @@ namespace Connect_Four
         {
             coinTosser.Move(new Point(point.X, 0), GridSize, TimeSpan.FromMilliseconds(1));
             coinTosser.Move(point, GridSize, TimeSpan.FromMilliseconds(100 * point.Y));
-            coinGrid[selectedColumn, (int)point.Y - 1] = coinTosser.CoinType;
+            coinGrid[(int)point.X, (int)point.Y - 1] = coinTosser.CoinType;
             coinTosser.Create((CoinType)((int)coinTosser.CoinType * -1), GridSize);
         }
 
@@ -121,9 +121,7 @@ namespace Connect_Four
             if (y != -1)
             {
                 Point point = new Point(selectedColumn, y);
-                coinTosser.Move(point, GridSize, TimeSpan.FromMilliseconds(100 * y));
-                coinGrid[selectedColumn, y - 1] = coinTosser.CoinType;
-                coinTosser.Create((CoinType)((int)coinTosser.CoinType * -1), GridSize);
+                DropCoin(point);
                 Connection.GameConnection.SendMessage(new Connection.Message<object>() { Type = typeof(Point).ToString(), Data = point });
             }
         }
