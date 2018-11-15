@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using Connection;
 
 namespace Connect_Four
 {
@@ -81,9 +82,16 @@ namespace Connect_Four
                     }
                 }
             }
-            coinTosser.Create(CoinType.Red, GridSize);
+            if (GameConnection.ConnectionType == ConnectionType.Server || GameConnection.ConnectionType == ConnectionType.Disconnected)
+            {
+                coinTosser.Create(CoinType.Red, GridSize);
+            }
+            else
+            {
+                coinTosser.Create(CoinType.Blue, GridSize);
+            }
             coinGrid = new CoinType[GridWidth, GridHeight];
-            Connection.GameConnection.LocationRecieved += GameConnection_LocationRecieved;
+            GameConnection.LocationRecieved += GameConnection_LocationRecieved;
         }
 
         private void GameConnection_LocationRecieved(object sender, Connection.GameConnectionEventArgs<Point> e)
@@ -98,6 +106,7 @@ namespace Connect_Four
             coinTosser.Move(point, GridSize, TimeSpan.FromMilliseconds(100 * point.Y));
             coinGrid[(int)point.X, (int)point.Y - 1] = coinTosser.CoinType;
             coinTosser.Create((CoinType)((int)coinTosser.CoinType * -1), GridSize);
+            coinTosser.Move(new Point(selectedColumn, 0), GridSize, TimeSpan.FromMilliseconds(150));
         }
 
         private void GameGrid_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
