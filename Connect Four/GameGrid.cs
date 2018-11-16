@@ -94,7 +94,7 @@ namespace Connect_Four
             GameConnection.LocationRecieved += GameConnection_LocationRecieved;
         }
 
-        private void GameConnection_LocationRecieved(object sender, Connection.GameConnectionEventArgs<Point> e)
+        private void GameConnection_LocationRecieved(object sender, GameConnectionEventArgs<Point> e)
         {
             Point point = e.GameObject;
             Application.Current.Dispatcher.Invoke((Action<Point>)DropCoin, point);
@@ -127,11 +127,11 @@ namespace Connect_Four
         private void GameGrid_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             int y = GetHeight(selectedColumn);
-            if (y != -1)
+            if (y != -1 && coinTosser.CoinType!= CoinType.Red)
             {
                 Point point = new Point(selectedColumn, y);
                 DropCoin(point);
-                Connection.GameConnection.SendMessage(new Connection.Message<object>() { Type = typeof(Point).ToString(), Data = point });
+                GameConnection.SendMessage(new Message<object>() { Type = typeof(Point).ToString(), Data = point });
             }
         }
 
