@@ -29,7 +29,7 @@ namespace Connect_Four
 
         private void GameConnection_MessageRecieved(object sender, GameConnectionEventArgs<string> e)
         {
-            Application.Current.Dispatcher.Invoke((Action<object>)AddMessage, e.GameObject);
+            Application.Current.Dispatcher.Invoke((Action<object>)AddMessage, new Message(e.GameObject, "Them"));
         }
 
         private void BtnSend_Click(object sender, RoutedEventArgs e)
@@ -59,13 +59,25 @@ namespace Connect_Four
         {
             string line = TxtSend.Text.Trim();
             GameConnection.SendMessage(new Message<object>() { Type = typeof(string).ToString(), Data = line });
-            AddMessage(line);
+            AddMessage(new Message(line, "Me"));
             TxtSend.Text = "";
         }
 
-        private void AddMessage(object line)
+        private void AddMessage(object msg)
         {
-            TxtView.Text += $"\n{(string)line}";
+            var message = (Message)msg;
+            TxtView.Text += $"\n{message.sender}:{message.line}";
         }
+    }
+
+    class Message
+    {
+        public Message(string line, string sender)
+        {
+            this.line = line;
+            this.sender = sender;
+        }
+        public string line { get; set; }
+        public string sender { get; set; }
     }
 }
