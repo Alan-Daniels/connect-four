@@ -159,7 +159,7 @@ namespace Connection
                         InboundReq.Add(connection);
                         connection.InvokeInboundRequest();
                     }
-                    else
+                    else if(OutboundReq.Contains(connection))
                     {
                         GameConnection.RequestGame(connection);
                     }
