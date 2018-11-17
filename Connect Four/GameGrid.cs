@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Connection;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-using Connection;
 
 namespace Connect_Four
 {
@@ -127,7 +127,7 @@ namespace Connect_Four
         private void GameGrid_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             int y = GetHeight(selectedColumn);
-            if (y != -1 && coinTosser.CoinType== CoinType.Red)
+            if (y != -1 && coinTosser.CoinType == CoinType.Red)
             {
                 Point point = new Point(selectedColumn, y);
                 DropCoin(point);

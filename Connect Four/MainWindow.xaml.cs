@@ -33,6 +33,7 @@ namespace Connect_Four
                         {
                             GameStateChanger = this
                         };
+                        overlay.Child = null;
                         break;
                     case GameState.Game:
                         root.Child = new GameGrid()
@@ -45,6 +46,7 @@ namespace Connect_Four
                             Width = 1050,
                             Background = Brushes.Linen
                         };
+                        overlay.Child = new GameOverlay();
                         break;
                 }
                 gameState = state;

@@ -7,6 +7,10 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
 
-    <Viewbox Name="root" Stretch="Uniform">
-    </Viewbox>
+    <Grid>
+        <Viewbox Name="root" Stretch="Uniform">
+        </Viewbox>
+        <Viewbox Name="overlay" Stretch="Uniform">
+        </Viewbox>
+    </Grid>
 </Window>

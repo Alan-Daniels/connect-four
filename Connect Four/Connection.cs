@@ -283,7 +283,6 @@ namespace Connection
         public static event EventHandler GameConnected;
         public static event EventHandler GameDisconnected;
         private static readonly BackgroundWorker ListenerBackgroundWorker;
-        //private static readonly BackgroundWorker GameBackgroundWorker;
         private static readonly BackgroundWorker GameReader;
         private static readonly BackgroundWorker GameWriter;
         public static ConnectionType ConnectionType { get; private set; }
@@ -295,13 +294,10 @@ namespace Connection
             messages = new LinkedList<string>();
 
             ListenerBackgroundWorker = new BackgroundWorker() { WorkerSupportsCancellation = true };
-            //GameBackgroundWorker = new BackgroundWorker();
             GameReader = new BackgroundWorker() { WorkerSupportsCancellation = true };
             GameWriter = new BackgroundWorker() { WorkerSupportsCancellation = true };
 
             ListenerBackgroundWorker.DoWork += ListenerBackgroundWorker_DoWork;
-            //GameBackgroundWorker.DoWork += GameBackgroundWorker_DoWork;
-            //GameBackgroundWorker.RunWorkerCompleted += GameBackgroundWorker_RunWorkerCompleted;
             GameReader.DoWork += GameReader_DoWork;
             GameWriter.DoWork += GameWriter_DoWork;
         }
@@ -451,75 +447,6 @@ namespace Connection
             }
             listener.Stop();
             Console.WriteLine("ListenerBackgroundWorker_DoWork - end");
-        }
-        [Obsolete]
-        private static void GameBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            TcpClient tcp = (TcpClient)e.Argument;
-            ListenerBackgroundWorker.CancelAsync();
-            GameConnected?.Invoke(null, null);
-            NetworkStream stream = tcp.GetStream();
-            stream.ReadTimeout = 1200;
-            StreamWriter writer = new StreamWriter(stream);
-            StreamReader reader = new StreamReader(stream);
-            while (tcp.Connected)
-            {
-                RecieveMessages(reader);
-                SendMessages(writer, reader);
-                Thread.Sleep(500);
-            }
-            GameDisconnected?.Invoke(null, null);
-        }
-        [Obsolete]
-        private static void RecieveMessages(StreamReader reader)
-        {
-            bool finished = false;
-            string currentString;
-            Message<object> currentMessage;
-            while (!finished)
-            {
-                try
-                {
-                    currentString = reader.ReadLine();
-                }
-                catch (IOException)
-                {
-                    currentString = null;
-                }
-                if (!(currentString == null || currentString == ""))
-                {
-                    currentMessage = JsonConvert.Deserialise<Message<object>>(currentString);
-                    if (currentMessage != default(Message<object>))
-                    {
-                        if (currentMessage.Type == typeof(string).ToString())
-                        {
-                            MessageRecieved?.Invoke(null, new GameConnectionEventArgs<string>(JsonConvert.Deserialise<Message<string>>(currentString).Data, currentString));
-                        }
-                        else if (currentMessage.Type == typeof(Point).ToString())
-                        {
-                            LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>(JsonConvert.Deserialise<Message<Point>>(currentString).Data, currentString));
-                        }
-                    }
-                }
-                else
-                {
-                    finished = true;
-                }
-            }
-        }
-        [Obsolete]
-        private static void SendMessages(StreamWriter writer, StreamReader reader)
-        {
-            if (messages.Count > 0)
-            {
-                lock (messages)
-                {
-                    foreach (var message in messages)
-                    {
-                        writer.WriteLine(message);
-                    }
-                }
-            }
         }
 
         private static void GameBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
