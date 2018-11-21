@@ -10,21 +10,8 @@ namespace Connect_Four
     /// </summary>
     public partial class ConnectGame : Grid
     {
-        public DependencyObject dependencyObject = new DependencyObject();
-        public static DependencyProperty GameStateChangerProperty = DependencyProperty.Register("GameState", typeof(IGameStateChanger), typeof(ConnectGame));
-
-        public IGameStateChanger GameStateChanger
-        {
-            get { return (IGameStateChanger)Application.Current.Dispatcher.Invoke((Func<DependencyProperty, object>)dependencyObject.GetValue, GameStateChangerProperty); }
-            set { Application.Current.Dispatcher.Invoke((Action<DependencyProperty, object>)dependencyObject.SetValue, GameStateChangerProperty, value); }
-        }
-
-        public GameState GameState
-        {
-            get { return Application.Current.Dispatcher.Invoke(GameStateChanger.GetState); }
-            set { Application.Current.Dispatcher.Invoke((Action<GameState, object>)GameStateChanger.SetState, value, null); }
-        }
-
+        public event EventHandler<GameMessage> NewGameMessage;
+        
         public ConnectGame()
         {
             InitializeComponent();
@@ -39,7 +26,7 @@ namespace Connect_Four
 
         private void GameConnection_GameConnected(object sender, EventArgs e)
         {
-            GameState = GameState.Game;
+            NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.GoGame });
         }
 
         public string GetPreferedName()
