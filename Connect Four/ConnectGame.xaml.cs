@@ -90,5 +90,10 @@ namespace Connect_Four
             }
             */
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.GoLoad });
+        }
     }
 }

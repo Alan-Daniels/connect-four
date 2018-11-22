@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Connect_Four;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -103,7 +104,6 @@ namespace Connection
             Console.WriteLine("Advertize_DoWork - start");
             UdpClient server = new UdpClient(AddressFamily.InterNetwork);
             server.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            server.ExclusiveAddressUse = false;
             server.Client.Bind(IP.BroadcastRecieve);
 
             while (!Advertize.CancellationPending)
@@ -128,21 +128,15 @@ namespace Connection
         private static void WhoAmI(object from)
         {
             IPEndPoint to = new IPEndPoint((IPAddress)from, IP.advertizePort);
-            TcpClient client = new TcpClient(AddressFamily.InterNetwork);
-            client.ExclusiveAddressUse = false;
-            client.Connect(to);
-
-            NetworkStream stream = client.GetStream();
-            if (to.Address.Equals(IP.LocalAddress))
+            if (!to.Address.Equals(IP.LocalAddress))
             {
-                binaryFormatter.Serialize(stream, new ConnectionInfo() { address = IP.LocalAddress, displayName = "Me" });
-            }
-            else
-            {
+                TcpClient client = new TcpClient(AddressFamily.InterNetwork);
+                client.Connect(to);
+                NetworkStream stream = client.GetStream();
                 binaryFormatter.Serialize(stream, new ConnectionInfo() { address = IP.LocalAddress, displayName = GetName() });
+                stream.Close();
+                client.Close();
             }
-            stream.Close();
-            client.Close();
         }
 
         private static void AddInboundRequest(object from)
@@ -159,7 +153,7 @@ namespace Connection
                         InboundReq.Add(connection);
                         connection.InvokeInboundRequest();
                     }
-                    else if(OutboundReq.Contains(connection))
+                    else if (OutboundReq.Contains(connection))
                     {
                         GameConnection.RequestGame(connection);
                     }
@@ -189,7 +183,6 @@ namespace Connection
 
             UdpClient client = new UdpClient(AddressFamily.InterNetwork);
             TcpListener server = new TcpListener(IP.AdvertizeRecieve);
-            server.ExclusiveAddressUse = false;
             server.Start();
 
             byte[] msg = Encoding.ASCII.GetBytes("?????");
@@ -280,6 +273,7 @@ namespace Connection
     {
         public static event GameConnectionEventHandler<string> MessageRecieved;
         public static event GameConnectionEventHandler<Point> LocationRecieved;
+        public static event EventHandler<GameMessage> GameMessageRecieved;
         public static event EventHandler GameConnected;
         public static event EventHandler GameDisconnected;
         private static readonly BackgroundWorker ListenerBackgroundWorker;
@@ -353,6 +347,10 @@ namespace Connection
                         {
                             LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>(JsonConvert.Deserialise<Message<Point>>(currentString).Data, currentString));
                         }
+                        else if (currentMessage.Type == typeof(GameMessage).ToString())
+                        {
+                            GameMessageRecieved?.Invoke(null, JsonConvert.Deserialise<GameMessage>(currentString));
+                        }
                     }
                 }
             }
@@ -370,9 +368,9 @@ namespace Connection
             }
         }
 
-        private static void StopGame()
+        public static void StopGame()
         {
-            if (GameReader.IsBusy || GameWriter.IsBusy)
+            if (ConnectionType != ConnectionType.Disconnected && (GameReader.IsBusy || GameWriter.IsBusy))
             {
                 GameReader.CancelAsync();
                 GameWriter.CancelAsync();
@@ -425,7 +423,6 @@ namespace Connection
                 }
                 catch (Exception)
                 {
-                    // the connection has failed
                     throw;
                 }
             }
@@ -434,7 +431,7 @@ namespace Connection
         private static void ListenerBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             Console.WriteLine("ListenerBackgroundWorker_DoWork - start");
-            TcpListener listener = new TcpListener(IP.GameRecieve) { ExclusiveAddressUse = false };
+            TcpListener listener = new TcpListener(IP.GameRecieve);
             listener.Start();
             while (!ListenerBackgroundWorker.CancellationPending)
             {

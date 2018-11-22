@@ -41,7 +41,13 @@ namespace Connect_Four
         public void Load()
         {
             Clear();
-            AddRange(JsonConvert.Deserialise<List<T>>(GetData()));
+            try
+            {
+                AddRange(JsonConvert.Deserialise<List<T>>(GetData()));
+            }
+            catch (Exception)
+            {
+            }
         }
 
         public void Save()

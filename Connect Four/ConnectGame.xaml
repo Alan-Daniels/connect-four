@@ -10,6 +10,7 @@
     <WrapPanel Name="ConnectionList" Height="413" VerticalAlignment="Top" Background="Aqua"/>
     <Button Name="BtnReload" Content="Reload" HorizontalAlignment="Left" Margin="7,423,0,0" VerticalAlignment="Top" Width="75" Click="BtnReload_Click"/>
     <TextBox x:Name="NameBox" HorizontalAlignment="Left" Height="23" Margin="100,420,0,0" TextWrapping="Wrap" Text="Unknown" VerticalAlignment="Top" Width="120"/>
+    <Button Content="Load" HorizontalAlignment="Left" Margin="715,428,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click"/>
 
 
 

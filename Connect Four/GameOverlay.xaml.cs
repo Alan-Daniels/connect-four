@@ -39,13 +39,18 @@ namespace Connect_Four
 
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
-            NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.GoConnect });
+            NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.DoExit, arg = false });
         }
 
         private void SaveNExit_Click(object sender, RoutedEventArgs e)
         {
-            NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.DoSave });
-            NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.GoConnect });
+            AskSaveName askName = new AskSaveName();
+            askName.ShowDialog();
+            if (askName.DialogResult == System.Windows.Forms.DialogResult.OK)
+            {
+                NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.DoSave, arg = askName.NameText });
+                NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.DoExit, arg = false });
+            }
         }
 
         private void Send()
@@ -60,6 +65,20 @@ namespace Connect_Four
         {
             var message = (Message)msg;
             TxtView.Text += $"\n{message.sender}:{message.line}";
+        }
+
+        private void BtnAIOn_Click(object sender, RoutedEventArgs e)
+        {
+            BtnAIOn.IsEnabled = false;
+            BtnAIOff.IsEnabled = true;
+            NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.DoSetAI, arg = true });
+        }
+
+        private void BtnAIOff_Click(object sender, RoutedEventArgs e)
+        {
+            BtnAIOn.IsEnabled = true;
+            BtnAIOff.IsEnabled = false;
+            NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.DoSetAI, arg = false });
         }
     }
 

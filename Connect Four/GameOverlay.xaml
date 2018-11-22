@@ -11,4 +11,7 @@
     <TextBox x:Name="TxtSend" HorizontalAlignment="Left" Height="23" Margin="655,427,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="118" KeyUp="TxtSend_KeyUp"/>
     <Button x:Name="BtnExit" Content="Exit" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="75" Margin="0,0,0,430" Click="Exit_Click"/>
     <Button x:Name="SaveNExit" Content="Save &amp; Exit" HorizontalAlignment="Left" Margin="0,25,0,0" VerticalAlignment="Top" Width="75" Click="SaveNExit_Click"/>
+    <Button x:Name="BtnAIOn" Content="On" HorizontalAlignment="Left" Margin="10,421,0,0" VerticalAlignment="Top" Width="35" Click="BtnAIOn_Click"/>
+    <Button x:Name="BtnAIOff" Content="Off" HorizontalAlignment="Left" Margin="50,421,0,0" VerticalAlignment="Top" Width="35" Click="BtnAIOff_Click" IsEnabled="False"/>
+    <Label Content="AI" HorizontalAlignment="Left" Margin="32,382,0,0" VerticalAlignment="Top" Width="30" FontWeight="Bold" FontSize="18"/>
 </Grid>

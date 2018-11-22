@@ -6,8 +6,8 @@
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800">
     
-    <WrapPanel x:Name="PnlSaved" HorizontalAlignment="Left" Height="391" VerticalAlignment="Top" Width="800"/>
-    <Button x:Name="BtnNew" Content="New Game" HorizontalAlignment="Left" Margin="0,430,0,0" VerticalAlignment="Top" Width="75"/>
-    <Button Content="Button" HorizontalAlignment="Left" Margin="100,430,0,0" VerticalAlignment="Top" Width="75"/>
+    <WrapPanel x:Name="PnlSaved" HorizontalAlignment="Left" Height="391" VerticalAlignment="Top" Width="800" Background="Aqua"/>
+    <Button x:Name="BtnNew" Content="New Game" HorizontalAlignment="Left" Margin="0,430,0,0" VerticalAlignment="Top" Width="75" Click="BtnNew_Click"/>
+    <Button x:Name="BtnConnect" Content="Connect" HorizontalAlignment="Left" Margin="715,430,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="4.533,0.326" Click="BtnConnect_Click"/>
 
 </Grid>
