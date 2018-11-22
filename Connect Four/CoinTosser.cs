@@ -12,13 +12,15 @@ namespace Connect_Four
     {
         public event EventHandler BlueTurn;
         public event EventHandler RedTurn;
+        public event EventHandler<Point> CheckMove;
 
-        private Image coin;
+        public Image Coin;
         private Point location;
         private readonly Canvas canvas;
 
-        private readonly BitmapImage redCoin = new BitmapImage(new Uri("pack://siteoforigin:,,,/Images/coin_red.png"));
-        private readonly BitmapImage blueCoin = new BitmapImage(new Uri("pack://siteoforigin:,,,/Images/coin_blue.png"));
+        public BitmapImage redCoin = new BitmapImage(new Uri("pack://siteoforigin:,,,/Images/coin_red.png"));
+        public BitmapImage blueCoin = new BitmapImage(new Uri("pack://siteoforigin:,,,/Images/coin_blue.png"));
+        public BitmapImage goldCoin = new BitmapImage(new Uri("pack://siteoforigin:,,,/Images/coin_gold.png"));
 
         public CoinType CoinType { get; private set; }
 
@@ -29,10 +31,10 @@ namespace Connect_Four
 
         public void Move(Point newLocation, Size gridSize, TimeSpan timeSpan)
         {
-            if (coin != null)
+            if (Coin != null)
             {
                 TranslateTransform trans = new TranslateTransform();
-                coin.RenderTransform = trans;
+                Coin.RenderTransform = trans;
                 DoubleAnimation animX = new DoubleAnimation((location.X * gridSize.Width), (newLocation.X * gridSize.Width), timeSpan);
                 DoubleAnimation animY = new DoubleAnimation((location.Y * gridSize.Height), (newLocation.Y * gridSize.Height), timeSpan);
                 trans.BeginAnimation(TranslateTransform.XProperty, animX);
@@ -43,19 +45,27 @@ namespace Connect_Four
 
         public void Delete()
         {
-            canvas.Children.Remove(coin);
-            coin = null;
+            canvas.Children.Remove(Coin);
+            Coin = null;
             CoinType = CoinType.None;
+        }
+
+        bool deleteNext = false;
+        public void DeleteNext()
+        {
+            deleteNext = true;
         }
 
         public void Create(CoinType coinType, Size gridSize)
         {
             CoinType = coinType;
+            CheckMove?.Invoke(this, new Point(location.X, location.Y - 1));
+
             switch (coinType)
             {
                 case CoinType.None:
                 case CoinType.Red:
-                    coin = new Image()
+                    Coin = new Image()
                     {
                         Width = gridSize.Width,
                         Height = gridSize.Height,
@@ -63,7 +73,7 @@ namespace Connect_Four
                     };
                     break;
                 case CoinType.Blue:
-                    coin = new Image()
+                    Coin = new Image()
                     {
                         Width = gridSize.Width,
                         Height = gridSize.Height,
@@ -71,12 +81,13 @@ namespace Connect_Four
                     };
                     break;
             }
+            canvas.Children.Add(Coin);
             location = new Point(location.X, 0);
             Move(location, gridSize, TimeSpan.FromMilliseconds(1));
-            canvas.Children.Add(coin);
 
-            if (coinType == CoinType.None)
+            if (coinType == CoinType.None || deleteNext)
             {
+                deleteNext = false;
                 Delete();
             }
             else

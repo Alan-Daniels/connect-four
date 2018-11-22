@@ -103,6 +103,7 @@ namespace Connect_Four
             MouseMove += GameGrid_MouseMove;
             Loaded += GameGrid_Loaded;
             Unloaded += GameGrid_Unloaded;
+            coinTosser.CheckMove += CheckForWin;
         }
 
         public void Load(SaveGame save)
@@ -236,14 +237,54 @@ namespace Connect_Four
             coinGrid[(int)point.X][(int)point.Y - 1] = coinTosser.CoinType;
             coinTosser.Create((CoinType)((int)coinTosser.CoinType * -1), GridSize);
             coinTosser.Move(new Point(selectedColumn, 0), GridSize, TimeSpan.FromMilliseconds(150));
-
-            CheckForWin(point);
         }
 
-        private void CheckForWin(Point newest)
+        private void CheckForWin(object sender, Point p)
         {
             bool emptyFound = false;
+            byte len = 4;
+            CoinType[] types = new CoinType[len];
+            byte[] counts = new byte[len];
+            Func<Point, int, Point>[] funcs = new Func<Point, int, Point>[] {
+                (Point a, int b) => { return new Point(a.X, a.Y + b); },
+                (Point a, int b) => { return new Point(a.X + b, a.Y + b); },
+                (Point a, int b) => { return new Point(a.X + b, a.Y); },
+                (Point a, int b) => { return new Point(a.X + b, a.Y - b); }
+            };
 
+            for (int i = -3; i <= 3; i++)
+            {
+                for (int w = 0; w < len; w++)
+                {
+                    Point a = funcs[w].Invoke(p, i);
+                    CoinType ct;
+                    if (a.X >= 0 && a.Y >= 0 && a.X < GridWidth && a.Y < GridHeight)
+                    {
+                        ct = coinGrid[(int)a.X][(int)a.Y];
+                        emptyFound = ct == CoinType.None ? true : emptyFound;
+                    }
+                    else
+                        ct = CoinType.None;
+
+                    if (ct != CoinType.None && ct == types[w])
+                        counts[w]++;
+                    else
+                    {
+                        counts[w] = 1;
+                        types[w] = ct;
+                    }
+
+                    if (counts[w] >= 4)
+                    {
+                        // a win has been found
+                        Console.WriteLine($"{types[w]} has won!");
+                        coinTosser.Coin.Source = coinTosser.goldCoin;
+                        coinTosser.DeleteNext();
+                    }
+                }
+            }
+
+            // make sure the board isnt full
             if (!emptyFound)
             {
                 foreach (var coins in coinGrid)
@@ -260,7 +301,7 @@ namespace Connect_Four
             }
             if (!emptyFound)
             {
-                coinTosser.Delete();
+                coinTosser.DeleteNext();
             }
         }
 

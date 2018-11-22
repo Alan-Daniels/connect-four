@@ -64,7 +64,7 @@ namespace Connect_Four
         private void AddMessage(object msg)
         {
             var message = (Message)msg;
-            TxtView.Text += $"\n{message.sender}:{message.line}";
+            TxtView.Text += $"\n{message.Sender}:{message.Line}";
         }
 
         private void BtnAIOn_Click(object sender, RoutedEventArgs e)
@@ -84,12 +84,12 @@ namespace Connect_Four
 
     class Message
     {
-        public Message(string line, string sender)
+        public Message(string Line, string Sender)
         {
-            this.line = line;
-            this.sender = sender;
+            this.Line = Line;
+            this.Sender = Sender;
         }
-        public string line { get; set; }
-        public string sender { get; set; }
+        public string Line { get; set; }
+        public string Sender { get; set; }
     }
 }
