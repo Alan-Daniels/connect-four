@@ -26,11 +26,11 @@ namespace Connection
         public static event RunWorkerCompletedEventHandler AdvertizersGotten { add { GetAdvertizers.RunWorkerCompleted += value; } remove { GetAdvertizers.RunWorkerCompleted -= value; } }
         public static event EventHandler<ConnectionInfo> NewConnection;
 
-        public static HashSet<ConnectionInfo> connections;
-        public static HashSet<ConnectionInfo> InboundReq;
-        public static HashSet<ConnectionInfo> OutboundReq;
+        public static ICollection<ConnectionInfo> connections;
+        public static ICollection<ConnectionInfo> InboundReq;
+        public static ICollection<ConnectionInfo> OutboundReq;
 
-        public static Func<string> GetNameAction = new Func<string>(() => { return "Bob"; });
+        public static Func<string> GetNameAction = new Func<string>(() => { return "Unknown"; });
         private static string GetName()
         {
             try
@@ -40,13 +40,13 @@ namespace Connection
             catch (Exception ex)
             {
                 Console.WriteLine($"Encountered an exception while grabbing preferred name.\n{ex}");
-                return "Bob";
+                return "Unknown";
             }
         }
 
         static Advertizer()
         {
-            connections = new HashSet<ConnectionInfo>();
+            connections = new HashSet<ConnectionInfo>();//change to binary tree variant
             InboundReq = new HashSet<ConnectionInfo>();
             OutboundReq = new HashSet<ConnectionInfo>();
             GetAdvertizers.DoWork += GetAdvertizers_DoWork;
@@ -478,7 +478,7 @@ namespace Connection
     }
 
     [Serializable]
-    public class ConnectionInfo
+    public class ConnectionInfo : IComparable<ConnectionInfo>
     {
         public event EventHandler InboundRequestRecieved;
         public event EventHandler OutboundRequestSent;
@@ -491,6 +491,13 @@ namespace Connection
         public void InvokeOutboundRequest()
         {
             OutboundRequestSent?.Invoke(this, EventArgs.Empty);
+        }
+
+        public int CompareTo(ConnectionInfo other)
+        {
+            string a = Encoding.ASCII.GetString(address.GetAddressBytes());
+            string b = Encoding.ASCII.GetString(other.address.GetAddressBytes());
+            return a.CompareTo(b);
         }
 
         public string displayName;
