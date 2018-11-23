@@ -1,4 +1,5 @@
 ﻿using Connection;
+using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -94,6 +95,7 @@ namespace Connect_Four
                     SetState(GameState.Load);
                     break;
                 case GameOperation.GoGame:
+                    Application.Current.Dispatcher.Invoke((Action<GameState>)SetState, GameState.Game);
                     SetState(GameState.Game);
                     break;
                 case GameOperation.GoLoad:
