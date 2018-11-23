@@ -195,10 +195,6 @@ namespace Connection
                 {
                     TcpClient tcp = server.AcceptTcpClient();
                     NetworkStream stream = tcp.GetStream();
-
-                    //twiddle thumbs i guess
-                    Thread.Sleep(100);
-
                     try
                     {
                         connections.Add((ConnectionInfo)binaryFormatter.Deserialize(stream));
@@ -210,6 +206,7 @@ namespace Connection
                     stream.Close();
                     tcp.Close();
                 }
+                Thread.Sleep(50);
             }
             getAdvertizersStopwatch.Stop();
             server.Stop();
@@ -441,6 +438,7 @@ namespace Connection
                     ConnectionType = ConnectionType.Server;
                     StartGame(tcp);
                 }
+                Thread.Sleep(100);
             }
             listener.Stop();
             Console.WriteLine("ListenerBackgroundWorker_DoWork - end");
@@ -477,6 +475,29 @@ namespace Connection
         }
     }
 
+    public class XmlConvert
+    {
+        public static void Serialise<T>(T input, FileInfo to)
+        {
+            System.Xml.Serialization.XmlSerializer serializer = new System.Xml.Serialization.XmlSerializer(typeof(T));
+            serializer.Serialize(to.OpenWrite(), input);
+        }
+
+        public static T Deserialise<T>(FileInfo from)
+        {
+            try
+            {
+                System.Xml.Serialization.XmlSerializer serializer = new System.Xml.Serialization.XmlSerializer(typeof(T));
+                T output = (T)serializer.Deserialize(from.OpenRead());
+                return output;
+            }
+            catch (Exception)
+            {
+                return default(T);
+            }
+        }
+    }
+
     [Serializable]
     public class ConnectionInfo : IComparable<ConnectionInfo>
     {
@@ -495,8 +516,8 @@ namespace Connection
 
         public int CompareTo(ConnectionInfo other)
         {
-            string a = Encoding.ASCII.GetString(address.GetAddressBytes());
-            string b = Encoding.ASCII.GetString(other.address.GetAddressBytes());
+            int a = address.GetHashCode();
+            int b = address.GetHashCode();
             return a.CompareTo(b);
         }
 

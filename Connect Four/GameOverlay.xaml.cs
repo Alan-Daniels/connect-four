@@ -64,7 +64,7 @@ namespace Connect_Four
         private void AddMessage(object msg)
         {
             var message = (Message)msg;
-            TxtView.Text += $"\n{message.Sender}:{message.Line}";
+            TxtView.Text += $"\n{message.Sender}: {message.Line}";
         }
 
         private void BtnAIOn_Click(object sender, RoutedEventArgs e)

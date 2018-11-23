@@ -85,11 +85,6 @@ namespace Connect_Four
         private AI FriendlyAI;
         private AI EnemyAI;
 
-        public GameGrid() : base()
-        {
-            Setup();
-        }
-
         public GameGrid(SaveGame save) : base()
         {
             this.save = save;
@@ -103,7 +98,6 @@ namespace Connect_Four
             MouseMove += GameGrid_MouseMove;
             Loaded += GameGrid_Loaded;
             Unloaded += GameGrid_Unloaded;
-            coinTosser.CheckMove += CheckForWin;
         }
 
         public void Load(SaveGame save)
@@ -115,15 +109,15 @@ namespace Connect_Four
             {
                 if (save.CoinGrid[i] == null)
                 {
-                    save.CoinGrid[i] = new CoinType[6];
+                    save.CoinGrid[i] = new CoinType[GridHeight];
                 }
             }
             coinGrid = save.CoinGrid;
 
             coinTosser.Delete();
-            for (int x = 0; x < save.GridSize.Width; x++)
+            for (int x = 0; x < GridWidth; x++)
             {
-                for (int y = 0; y < save.GridSize.Height; y++)
+                for (int y = 0; y < GridHeight; y++)
                 {
                     if (save.CoinGrid[x][y] != CoinType.None)
                     {
@@ -176,6 +170,10 @@ namespace Connect_Four
             }
             else
             {
+                Size s = SaveGame.DefaultSize;
+                GridWidth = (int)s.Width;
+                GridHeight = (int)s.Height;
+
                 GameConnection.LocationRecieved += GameConnection_LocationRecieved;
                 coinGrid = new CoinType[GridWidth][];
                 for (int i = 0; i < coinGrid.Length; i++)
@@ -232,9 +230,11 @@ namespace Connect_Four
 
         private void DropCoin(Point point)
         {
+            coinGrid[(int)point.X][(int)point.Y - 1] = coinTosser.CoinType;
+            CheckForWin(null, new Point(point.X, point.Y - 1));
+
             coinTosser.Move(new Point(point.X, 0), GridSize, TimeSpan.FromMilliseconds(1));
             coinTosser.Move(point, GridSize, TimeSpan.FromMilliseconds(100 * point.Y));
-            coinGrid[(int)point.X][(int)point.Y - 1] = coinTosser.CoinType;
             coinTosser.Create((CoinType)((int)coinTosser.CoinType * -1), GridSize);
             coinTosser.Move(new Point(selectedColumn, 0), GridSize, TimeSpan.FromMilliseconds(150));
         }
@@ -277,9 +277,11 @@ namespace Connect_Four
                     if (counts[w] >= 4)
                     {
                         // a win has been found
-                        Console.WriteLine($"{types[w]} has won!");
+                        //Console.WriteLine($"{types[w]} has won!");
+                        System.Windows.Forms.MessageBox.Show($"{types[w]} has won!");
                         coinTosser.Coin.Source = coinTosser.goldCoin;
                         coinTosser.DeleteNext();
+                        return;
                     }
                 }
             }
@@ -302,6 +304,8 @@ namespace Connect_Four
             if (!emptyFound)
             {
                 coinTosser.DeleteNext();
+                System.Windows.Forms.MessageBox.Show("The game is a Tie!");
+                return;
             }
         }
 
@@ -362,7 +366,18 @@ namespace Connect_Four
 
         public static SaveGame Default
         {
-            get { return new SaveGame(new CoinType[7][], CoinType.Red, new Size(7, 6), "default"); }
+            get
+            {
+                return new SaveGame(new CoinType[(int)DefaultSize.Width][], CoinType.Red, DefaultSize, "default");
+            }
+        }
+
+        public static Size DefaultSize
+        {
+            get
+            {
+                return new Size(7, 6);
+            }
         }
     }
 }

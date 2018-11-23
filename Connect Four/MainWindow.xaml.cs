@@ -1,9 +1,7 @@
-﻿using System;
+﻿using Connection;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
-using System.Linq;
-using Connection;
 
 namespace Connect_Four
 {
@@ -39,6 +37,7 @@ namespace Connect_Four
         {
             if (gameState != state)
             {
+                Size s = SaveGame.DefaultSize;
                 switch (state)
                 {
                     case GameState.Connect:
@@ -48,32 +47,14 @@ namespace Connect_Four
                         overlay.Child = null;
                         break;
                     case GameState.Game:
-                        if (args == null)
+                        root.Child = new GameGrid((SaveGame)args)
                         {
-                            root.Child = new GameGrid()
-                            {
-                                HorizontalAlignment = HorizontalAlignment.Center,
-                                VerticalAlignment = VerticalAlignment.Center,
-                                GridHeight = 6,
-                                GridWidth = 7,
-                                Height = 1050,
-                                Width = 1050,
-                                Background = Brushes.Linen
-                            };
-                        }
-                        else
-                        {
-                            root.Child = new GameGrid((SaveGame)args)
-                            {
-                                HorizontalAlignment = HorizontalAlignment.Center,
-                                VerticalAlignment = VerticalAlignment.Center,
-                                GridHeight = 6,
-                                GridWidth = 7,
-                                Height = 1050,
-                                Width = 1050,
-                                Background = Brushes.Linen
-                            };
-                        }
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Height = 1050,
+                            Width = 1050,
+                            Background = Brushes.Linen
+                        };
                         var gameOverlay = new GameOverlay();
                         gameOverlay.NewGameMessage += RecieveMessage;
                         overlay.Child = gameOverlay;

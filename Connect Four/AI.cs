@@ -28,7 +28,7 @@ namespace Connect_Four
 
         private void SendMessage()
         {
-            Thread.Sleep(250);
+            Thread.Sleep(350);
             int x, y, count = 100;
             do
             {

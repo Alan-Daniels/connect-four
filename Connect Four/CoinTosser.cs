@@ -12,7 +12,6 @@ namespace Connect_Four
     {
         public event EventHandler BlueTurn;
         public event EventHandler RedTurn;
-        public event EventHandler<Point> CheckMove;
 
         public Image Coin;
         private Point location;
@@ -59,8 +58,6 @@ namespace Connect_Four
         public void Create(CoinType coinType, Size gridSize)
         {
             CoinType = coinType;
-            CheckMove?.Invoke(this, new Point(location.X, location.Y - 1));
-
             switch (coinType)
             {
                 case CoinType.None:
