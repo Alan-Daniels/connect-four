@@ -319,7 +319,7 @@ namespace Connection
                 {
                     currentString = reader.ReadLine();
                 }
-                catch (IOException)
+                catch (Exception)
                 {
                     currentString = null;
                 }
@@ -357,7 +357,7 @@ namespace Connection
 
         private static void StopGame()
         {
-            if (ConnectionType != ConnectionType.Disconnected && (GameReader.IsBusy || GameWriter.IsBusy))
+            if (ConnectionType != ConnectionType.Disconnected)
             {
                 GameDisconnected?.Invoke(null, null);
                 ConnectionType = ConnectionType.Disconnected;
@@ -429,9 +429,9 @@ namespace Connection
             {
                 if (listener.Pending() && ConnectionType == ConnectionType.Disconnected)
                 {
-                    TcpClient tcp = listener.AcceptTcpClient();
+                    tcpClient = listener.AcceptTcpClient();
                     ConnectionType = ConnectionType.Server;
-                    StartGame(tcp);
+                    StartGame(tcpClient);
                 }
                 Thread.Sleep(100);
             }
