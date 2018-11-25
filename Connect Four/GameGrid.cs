@@ -279,9 +279,7 @@ namespace Connect_Four
                     if (counts[w] >= 4)
                     {
                         // a win has been found
-                        //Console.WriteLine($"{types[w]} has won!");
                         GameEnd?.Invoke(this, types[w]);
-                        //System.Windows.Forms.MessageBox.Show($"{types[w]} has won!");
                         coinTosser.Coin.Source = coinTosser.goldCoin;
                         coinTosser.DeleteNext();
                         return;

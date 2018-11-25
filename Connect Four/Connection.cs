@@ -105,11 +105,9 @@ namespace Connection
 
         private static async void DoAdvertize()
         {
-            System.Windows.Forms.MessageBox.Show("Advertizer started");
             UdpClient server = new UdpClient(AddressFamily.InterNetwork);
             server.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             server.Client.Bind(IP.BroadcastRecieve);
-
             while (!AdvertizeCancel.Token.IsCancellationRequested)
             {
                 var result = await server.ReceiveAsync();
@@ -123,7 +121,6 @@ namespace Connection
                     new Task(AddInboundRequest, result.RemoteEndPoint.Address).Start();
                 }
             }
-            System.Windows.Forms.MessageBox.Show("Advertizer closed");
         }
 
         private static void WhoAmI(object from)
@@ -170,15 +167,10 @@ namespace Connection
                 NewConnection.Invoke(null, connection);
                 connection.InvokeInboundRequest();
             }
-            else
-            {
-                Console.WriteLine($"Could not add inbound connection {sender} as no new connections could be made.");
-            }
         }
 
         private static void GetAdvertizers_DoWork(object sender, DoWorkEventArgs e)
         {// can fit up to 35-40 connections before timeout
-            Console.WriteLine("GetAdvertizers_DoWork - start");
             Stopwatch getAdvertizersStopwatch = new Stopwatch();
             connections.Clear();
 
@@ -211,7 +203,6 @@ namespace Connection
             }
             getAdvertizersStopwatch.Stop();
             server.Stop();
-            Console.WriteLine("GetAdvertizers_DoWork - end");
         }
     }
 
@@ -361,7 +352,6 @@ namespace Connection
                 GameReader.RunWorkerAsync(new StreamReader(stream));
                 GameWriter.RunWorkerAsync(new StreamWriter(stream));
                 GameConnected?.Invoke(null, null);
-                System.Windows.Forms.MessageBox.Show("game opened");
             }
         }
 
@@ -371,7 +361,6 @@ namespace Connection
             {
                 GameDisconnected?.Invoke(null, null);
                 ConnectionType = ConnectionType.Disconnected;
-                System.Windows.Forms.MessageBox.Show("game closed");
             }
         }
 
@@ -434,7 +423,6 @@ namespace Connection
 
         private static void ListenerBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            Console.WriteLine("ListenerBackgroundWorker_DoWork - start");
             TcpListener listener = new TcpListener(IP.GameRecieve);
             listener.Start();
             while (!ListenerBackgroundWorker.CancellationPending)
@@ -448,7 +436,6 @@ namespace Connection
                 Thread.Sleep(100);
             }
             listener.Stop();
-            Console.WriteLine("ListenerBackgroundWorker_DoWork - end");
         }
     }
 
