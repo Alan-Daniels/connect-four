@@ -71,24 +71,10 @@ namespace Connect_Four
 
         private void RequestConnect(object sender, ConnectionInfo connection)
         {
-            //((ConnectionView)sender).Fill = Brushes.Yellow;
             Advertizer.OutboundReq.Add(connection);
             connection.InvokeOutboundRequest();
 
             Advertizer.SendRequest(connection);
-            /*
-            ConnectionInfo collision = Advertizer.GetFirstRequestPair();
-            if (collision != null)
-            {
-                // from here we make a game request.
-                // if the other user hasnt started a game or left the game it should be successful.
-                // otherwize remove the inbound request and leave the outbound marker
-            }
-            else
-            {
-                // lodge the request to the other user.
-            }
-            */
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)

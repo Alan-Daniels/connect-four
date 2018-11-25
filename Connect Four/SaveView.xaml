@@ -4,6 +4,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:Connect_Four"
-      mc:Ignorable="d" d:DesignWidth="120" Background="Gray" Height="35">
-    <Button Name="BtnLoad" Content="Load" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Height="35" RenderTransformOrigin="0.5,0.5" Click="BtnLoad_Click"/>
+      mc:Ignorable="d" d:DesignWidth="100" Background="Gray" Height="125">
+    <Button Name="BtnLoad" Content="Load" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="100" Height="25" RenderTransformOrigin="0.5,0.5" Click="BtnLoad_Click" Margin="0,0,0,-0.333"/>
+    <Canvas x:Name="Preview" HorizontalAlignment="Left" Height="100" VerticalAlignment="Top" Width="100" Background="Linen"/>
 </Grid>

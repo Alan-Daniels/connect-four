@@ -17,6 +17,29 @@ namespace Connect_Four
         {
             InitializeComponent();
             GameConnection.MessageRecieved += GameConnection_MessageRecieved;
+            GameConnection.GameDisconnected += GameConnection_GameDisconnected;
+            GameGrid.GameEnd += GameGrid_GameEnd;
+        }
+
+        private void GameGrid_GameEnd(object sender, CoinType e)
+        {
+            switch (e)
+            {
+                case CoinType.None:
+                    Application.Current.Dispatcher.Invoke((Action<object>)AddMessage, new Message($"The Game has ended in a tie!", "Server"));
+                    break;
+                case CoinType.Red:
+                    Application.Current.Dispatcher.Invoke((Action<object>)AddMessage, new Message($"You have won!", "Server"));
+                    break;
+                case CoinType.Blue:
+                    Application.Current.Dispatcher.Invoke((Action<object>)AddMessage, new Message($"Your opponent has won!", "Server"));
+                    break;
+            }
+        }
+
+        private void GameConnection_GameDisconnected(object sender, EventArgs e)
+        {
+            Application.Current.Dispatcher.Invoke((Action<object>)AddMessage, new Message("Game Disconnected", "Server"));
         }
 
         private void GameConnection_MessageRecieved(object sender, GameConnectionEventArgs<string> e)

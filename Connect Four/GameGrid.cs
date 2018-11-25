@@ -16,6 +16,8 @@ namespace Connect_Four
 
     public class GameGrid : Canvas
     {
+        public static event EventHandler<CoinType> GameEnd;
+
         public static readonly DependencyProperty GridWidthProperty = DependencyProperty.Register("GridWidth", typeof(int), typeof(GameGrid));
         public int GridWidth
         {
@@ -98,6 +100,12 @@ namespace Connect_Four
             MouseMove += GameGrid_MouseMove;
             Loaded += GameGrid_Loaded;
             Unloaded += GameGrid_Unloaded;
+            GameConnection.GameDisconnected += GameConnection_GameDisconnected;
+        }
+
+        private void GameConnection_GameDisconnected(object sender, EventArgs e)
+        {
+            MouseLeftButtonUp -= GameGrid_MouseUp;
         }
 
         public void Load(SaveGame save)
@@ -147,19 +155,14 @@ namespace Connect_Four
             return new SaveGame(coinGrid, coinTosser.CoinType, new Size(GridWidth, GridHeight), "placeholder");
         }
 
-        public void EndGame(bool serverMessage)
+        public void EndGame()
         {
-            if (GameConnection.ConnectionType != ConnectionType.Disconnected)
-            {
-                if (!serverMessage)
-                    GameConnection.SendMessage(new Message<object>() { Type = typeof(GameMessage).ToString(), Data = new GameMessage() { operation = GameOperation.DoExit, arg = true } });
-                GameConnection.StopGame();
-            }
+            GameConnection.Disconnect();
         }
 
         private void GameGrid_Unloaded(object sender, RoutedEventArgs e)
         {
-            EndGame(false);
+            EndGame();
         }
 
         private void GameGrid_Loaded(object sender, RoutedEventArgs e)
@@ -213,7 +216,6 @@ namespace Connect_Four
                     }
                 }
             }
-
         }
 
         private void FriendlyAI_LocationRecieved(object sender, GameConnectionEventArgs<Point> e)
@@ -278,7 +280,8 @@ namespace Connect_Four
                     {
                         // a win has been found
                         //Console.WriteLine($"{types[w]} has won!");
-                        System.Windows.Forms.MessageBox.Show($"{types[w]} has won!");
+                        GameEnd?.Invoke(this, types[w]);
+                        //System.Windows.Forms.MessageBox.Show($"{types[w]} has won!");
                         coinTosser.Coin.Source = coinTosser.goldCoin;
                         coinTosser.DeleteNext();
                         return;
@@ -304,7 +307,7 @@ namespace Connect_Four
             if (!emptyFound)
             {
                 coinTosser.DeleteNext();
-                System.Windows.Forms.MessageBox.Show("The game is a Tie!");
+                GameEnd?.Invoke(this, CoinType.None);
                 return;
             }
         }

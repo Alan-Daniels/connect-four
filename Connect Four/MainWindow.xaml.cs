@@ -91,7 +91,7 @@ namespace Connect_Four
                     ((GameGrid)root.Child).FriendlyAIEnabled = (bool)e.arg;
                     break;
                 case GameOperation.DoExit:
-                    ((GameGrid)root.Child).EndGame((bool)e.arg);
+                    ((GameGrid)root.Child).EndGame();
                     SetState(GameState.Load);
                     break;
                 case GameOperation.GoGame:

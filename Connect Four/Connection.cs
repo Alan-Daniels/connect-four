@@ -20,8 +20,10 @@ namespace Connection
     public static class Advertizer
     {
         private static readonly BackgroundWorker GetAdvertizers = new BackgroundWorker() { WorkerSupportsCancellation = true };
-        private static readonly BackgroundWorker Advertize = new BackgroundWorker() { WorkerSupportsCancellation = true };
         private static readonly BinaryFormatter binaryFormatter = new BinaryFormatter();
+
+        private static CancellationTokenSource AdvertizeCancel;
+        private static Task AdvertizeTask;
 
         public static event RunWorkerCompletedEventHandler AdvertizersGotten { add { GetAdvertizers.RunWorkerCompleted += value; } remove { GetAdvertizers.RunWorkerCompleted -= value; } }
         public static event EventHandler<ConnectionInfo> NewConnection;
@@ -50,7 +52,8 @@ namespace Connection
             InboundReq = new HashSet<ConnectionInfo>();
             OutboundReq = new HashSet<ConnectionInfo>();
             GetAdvertizers.DoWork += GetAdvertizers_DoWork;
-            Advertize.DoWork += Advertize_DoWork;
+            AdvertizeCancel = new CancellationTokenSource();
+            AdvertizeCancel.Cancel();
         }
 
         public static ConnectionInfo GetFirstRequestPair()
@@ -75,20 +78,19 @@ namespace Connection
 
         public static void StartAdvertize()
         {
-            if (!Advertize.IsBusy)
+            if (AdvertizeTask == null || AdvertizeTask.Status == TaskStatus.RanToCompletion)
             {
+                AdvertizeCancel = new CancellationTokenSource();
                 InboundReq.Clear();
                 OutboundReq.Clear();
-                Advertize.RunWorkerAsync();
+                AdvertizeTask = new Task(DoAdvertize, AdvertizeCancel.Token);
+                AdvertizeTask.Start();
             }
         }
 
         public static void StopAdvertize()
         {
-            if (Advertize.IsBusy)
-            {
-                Advertize.CancelAsync();
-            }
+            AdvertizeCancel.Cancel();
         }
 
         public static void StartGetAdvertizers()
@@ -99,30 +101,29 @@ namespace Connection
             }
         }
 
-        private static async void Advertize_DoWork(object sender, DoWorkEventArgs e)
+
+
+        private static async void DoAdvertize()
         {
-            Console.WriteLine("Advertize_DoWork - start");
+            System.Windows.Forms.MessageBox.Show("Advertizer started");
             UdpClient server = new UdpClient(AddressFamily.InterNetwork);
             server.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             server.Client.Bind(IP.BroadcastRecieve);
 
-            while (!Advertize.CancellationPending)
+            while (!AdvertizeCancel.Token.IsCancellationRequested)
             {
-                UdpReceiveResult result = await server.ReceiveAsync();
-                if (!Advertize.CancellationPending)
+                var result = await server.ReceiveAsync();
+                string request = Encoding.ASCII.GetString(result.Buffer);
+                if (request.Contains("?"))
                 {
-                    string request = Encoding.ASCII.GetString(result.Buffer);
-                    if (request.Contains("?"))
-                    {
-                        new Task(WhoAmI, result.RemoteEndPoint.Address).Start();
-                    }
-                    else if (request.Contains("!"))
-                    {
-                        new Task(AddInboundRequest, result.RemoteEndPoint.Address).Start();
-                    }
+                    new Task(WhoAmI, result.RemoteEndPoint.Address).Start();
+                }
+                else if (request.Contains("!"))
+                {
+                    new Task(AddInboundRequest, result.RemoteEndPoint.Address).Start();
                 }
             }
-            Console.WriteLine("Advertize_DoWork - end");
+            System.Windows.Forms.MessageBox.Show("Advertizer closed");
         }
 
         private static void WhoAmI(object from)
@@ -189,7 +190,7 @@ namespace Connection
             client.Send(msg, msg.Length, IP.BroadcastSend);
 
             getAdvertizersStopwatch.Start();
-            while (getAdvertizersStopwatch.ElapsedMilliseconds <= 4000)
+            while (getAdvertizersStopwatch.ElapsedMilliseconds <= 1500)
             {
                 if (server.Pending())
                 {
@@ -277,6 +278,7 @@ namespace Connection
         private static readonly BackgroundWorker GameReader;
         private static readonly BackgroundWorker GameWriter;
         public static ConnectionType ConnectionType { get; private set; }
+        private static TcpClient tcpClient;
 
         private static readonly LinkedList<string> messages;
 
@@ -297,7 +299,7 @@ namespace Connection
         {
             var writer = (StreamWriter)e.Argument;
             writer.AutoFlush = true;
-            while (!GameWriter.CancellationPending)
+            while (tcpClient.Connected)
             {
                 if (messages.Count > 0)
                 {
@@ -317,9 +319,10 @@ namespace Connection
         private static void GameReader_DoWork(object sender, DoWorkEventArgs e)
         {
             var reader = (StreamReader)e.Argument;
+            ((NetworkStream)reader.BaseStream).ReadTimeout = 5000;
             string currentString;
             Message<object> currentMessage;
-            while (!GameReader.CancellationPending)
+            while (tcpClient.Connected)
             {
                 try
                 {
@@ -328,7 +331,6 @@ namespace Connection
                 catch (IOException)
                 {
                     currentString = null;
-                    StopGame();
                 }
 
                 if (!(currentString == null || currentString == ""))
@@ -344,13 +346,10 @@ namespace Connection
                         {
                             LocationRecieved?.Invoke(null, new GameConnectionEventArgs<Point>(JsonConvert.Deserialise<Message<Point>>(currentString).Data, currentString));
                         }
-                        else if (currentMessage.Type == typeof(GameMessage).ToString())
-                        {
-                            GameMessageRecieved?.Invoke(null, JsonConvert.Deserialise<GameMessage>(currentString));
-                        }
                     }
                 }
             }
+            StopGame();
         }
 
         private static void StartGame(TcpClient client)
@@ -362,17 +361,17 @@ namespace Connection
                 GameReader.RunWorkerAsync(new StreamReader(stream));
                 GameWriter.RunWorkerAsync(new StreamWriter(stream));
                 GameConnected?.Invoke(null, null);
+                System.Windows.Forms.MessageBox.Show("game opened");
             }
         }
 
-        public static void StopGame()
+        private static void StopGame()
         {
             if (ConnectionType != ConnectionType.Disconnected && (GameReader.IsBusy || GameWriter.IsBusy))
             {
-                GameReader.CancelAsync();
-                GameWriter.CancelAsync();
                 GameDisconnected?.Invoke(null, null);
                 ConnectionType = ConnectionType.Disconnected;
+                System.Windows.Forms.MessageBox.Show("game closed");
             }
         }
 
@@ -411,17 +410,25 @@ namespace Connection
             if (ConnectionType == ConnectionType.Disconnected)
             {
                 IPEndPoint to = new IPEndPoint(connectionInfo.address, IP.gamePort);
-                TcpClient tcp = new TcpClient(AddressFamily.InterNetwork);
+                tcpClient = new TcpClient(AddressFamily.InterNetwork);
                 try
                 {
-                    tcp.Connect(to);
+                    tcpClient.Connect(to);
                     ConnectionType = ConnectionType.Client;
-                    StartGame(tcp);
+                    StartGame(tcpClient);
                 }
                 catch (Exception)
                 {
                     throw;
                 }
+            }
+        }
+
+        public static void Disconnect()
+        {
+            if (ConnectionType != ConnectionType.Disconnected)
+            {
+                tcpClient.Close();
             }
         }
 
@@ -442,12 +449,6 @@ namespace Connection
             }
             listener.Stop();
             Console.WriteLine("ListenerBackgroundWorker_DoWork - end");
-        }
-
-        private static void GameBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            ConnectionType = ConnectionType.Disconnected;
-            messages.Clear();
         }
     }
 
