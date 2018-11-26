@@ -170,7 +170,7 @@ namespace Connection
         }
 
         private static void GetAdvertizers_DoWork(object sender, DoWorkEventArgs e)
-        {// can fit up to 35-40 connections before timeout
+        {
             Stopwatch getAdvertizersStopwatch = new Stopwatch();
             connections.Clear();
 
@@ -262,7 +262,6 @@ namespace Connection
     {
         public static event GameConnectionEventHandler<string> MessageRecieved;
         public static event GameConnectionEventHandler<Point> LocationRecieved;
-        public static event EventHandler<GameMessage> GameMessageRecieved;
         public static event EventHandler GameConnected;
         public static event EventHandler GameDisconnected;
         private static readonly BackgroundWorker ListenerBackgroundWorker;
@@ -310,7 +309,6 @@ namespace Connection
         private static void GameReader_DoWork(object sender, DoWorkEventArgs e)
         {
             var reader = (StreamReader)e.Argument;
-            ((NetworkStream)reader.BaseStream).ReadTimeout = 5000;
             string currentString;
             Message<object> currentMessage;
             while (tcpClient.Connected)
@@ -343,12 +341,13 @@ namespace Connection
             StopGame();
         }
 
-        private static void StartGame(TcpClient client)
+        private static void StartGame()
         {
             if (!(GameReader.IsBusy || GameWriter.IsBusy))
             {
                 StopListening();
-                var stream = client.GetStream();
+                var stream = tcpClient.GetStream();
+                stream.ReadTimeout = 5000;
                 GameReader.RunWorkerAsync(new StreamReader(stream));
                 GameWriter.RunWorkerAsync(new StreamWriter(stream));
                 GameConnected?.Invoke(null, null);
@@ -404,7 +403,7 @@ namespace Connection
                 {
                     tcpClient.Connect(to);
                     ConnectionType = ConnectionType.Client;
-                    StartGame(tcpClient);
+                    StartGame();
                 }
                 catch (Exception)
                 {
@@ -431,7 +430,7 @@ namespace Connection
                 {
                     tcpClient = listener.AcceptTcpClient();
                     ConnectionType = ConnectionType.Server;
-                    StartGame(tcpClient);
+                    StartGame();
                 }
                 Thread.Sleep(100);
             }

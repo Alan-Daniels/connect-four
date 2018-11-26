@@ -20,8 +20,6 @@ namespace Connect_Four
             SavedGames = new SavableList<SaveGame>(new FileInfo("savegames.json"));
             SavedGames.Load();
             SetState(GameState.Load);
-
-            GameConnection.GameMessageRecieved += RecieveMessage;
         }
 
         public GameState GetState()
