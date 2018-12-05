@@ -14,9 +14,12 @@ namespace Connect_Four
         Blue = -1
     }
 
+    /// <summary>
+    /// The main game engine.
+    /// </summary>
     public class GameGrid : Canvas
     {
-        public static event EventHandler<CoinType> GameEnd;
+        public static event EventHandler<CoinType> GameMessage;
 
         public static readonly DependencyProperty GridWidthProperty = DependencyProperty.Register("GridWidth", typeof(int), typeof(GameGrid));
         public int GridWidth
@@ -108,6 +111,10 @@ namespace Connect_Four
             MouseLeftButtonUp -= GameGrid_MouseUp;
         }
 
+        /// <summary>
+        /// loads all coins spaces into the board.
+        /// </summary>
+        /// <param name="save">Save point</param>
         public void Load(SaveGame save)
         {
             GridWidth = (int)save.GridSize.Width;
@@ -150,9 +157,13 @@ namespace Connect_Four
             FriendlyAI.MakeMove();
         }
 
+        /// <summary>
+        /// Saves the boards current state.
+        /// </summary>
+        /// <returns></returns>
         public SaveGame Save()
         {
-            return new SaveGame(coinGrid, coinTosser.CoinType, new Size(GridWidth, GridHeight), "placeholder");
+            return new SaveGame(coinGrid, coinTosser.CoinType, new Size(GridWidth, GridHeight), "");
         }
 
         public void EndGame()
@@ -165,6 +176,11 @@ namespace Connect_Four
             EndGame();
         }
 
+        /// <summary>
+        /// Tnitialises visual aspects of the game.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GameGrid_Loaded(object sender, RoutedEventArgs e)
         {
             if (save != null)
@@ -230,6 +246,10 @@ namespace Connect_Four
             Application.Current.Dispatcher.Invoke((Action<Point>)DropCoin, point);
         }
 
+        /// <summary>
+        /// Drops a coin to the given location.
+        /// </summary>
+        /// <param name="point">Location to go</param>
         private void DropCoin(Point point)
         {
             coinGrid[(int)point.X][(int)point.Y - 1] = coinTosser.CoinType;
@@ -241,6 +261,11 @@ namespace Connect_Four
             coinTosser.Move(new Point(selectedColumn, 0), GridSize, TimeSpan.FromMilliseconds(150));
         }
 
+        /// <summary>
+        /// checks for a win or if the board is full
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="p"></param>
         private void CheckForWin(object sender, Point p)
         {
             bool emptyFound = false;
@@ -279,7 +304,7 @@ namespace Connect_Four
                     if (counts[w] >= 4)
                     {
                         // a win has been found
-                        GameEnd?.Invoke(this, types[w]);
+                        GameMessage?.Invoke(this, types[w]);
                         coinTosser.Coin.Source = coinTosser.goldCoin;
                         coinTosser.DeleteNext();
                         return;
@@ -305,11 +330,16 @@ namespace Connect_Four
             if (!emptyFound)
             {
                 coinTosser.DeleteNext();
-                GameEnd?.Invoke(this, CoinType.None);
+                GameMessage?.Invoke(this, CoinType.None);
                 return;
             }
         }
 
+        /// <summary>
+        /// animates the coin to go towards the mouse
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GameGrid_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             double x = e.GetPosition(this).X - 1;
@@ -325,6 +355,11 @@ namespace Connect_Four
             }
         }
 
+        /// <summary>
+        /// Gets a droplocation based on where the mouse is.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GameGrid_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             int y = GetHeight(selectedColumn);
@@ -336,6 +371,11 @@ namespace Connect_Four
             }
         }
 
+        /// <summary>
+        /// Gives the y co-ordinate for the given x co-ordinate after falling to the lowest spot.
+        /// </summary>
+        /// <param name="column">The X co-ordinate of the desired drop point.</param>
+        /// <returns>The Y co-ordinate of the coin after landing.</returns>
         private int GetHeight(int column)
         {
             for (int i = GridHeight - 1; i >= 0; i--)
@@ -349,6 +389,9 @@ namespace Connect_Four
         }
     }
 
+    /// <summary>
+    /// A savable state that the GameGrid can save as and load from.
+    /// </summary>
     [Serializable]
     public class SaveGame
     {

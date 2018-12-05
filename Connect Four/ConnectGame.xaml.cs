@@ -6,7 +6,7 @@ using System.Windows.Controls;
 namespace Connect_Four
 {
     /// <summary>
-    /// Interaction logic for ConnectGame.xaml
+    /// Connects two seperate instances of the game via TCP and starts a new game.
     /// </summary>
     public partial class ConnectGame : Grid
     {
@@ -29,11 +29,20 @@ namespace Connect_Four
             NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.GoGame });
         }
 
+        /// <summary>
+        /// Function that is passed to Advertizer's GetName method.
+        /// </summary>
+        /// <returns>The text written in NameBox.</returns>
         public string GetPreferedName()
         {
             return NameBox.Text.Trim();
         }
 
+        /// <summary>
+        /// Once all connections have been collected, add them all to a view.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void LoadAdvertizers(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
             ConnectionList.Children.Clear();
@@ -77,7 +86,7 @@ namespace Connect_Four
             Advertizer.SendRequest(connection);
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void BtnLoad_Click(object sender, RoutedEventArgs e)
         {
             NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.GoLoad });
         }

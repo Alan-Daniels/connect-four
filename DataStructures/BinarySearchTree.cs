@@ -1,51 +1,209 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DataStructures
 {
-    public class BinarySearchTree<T> : ICollection<T> where T : IComparable<T>
+    public class BinarySearchTree<T> where T : IComparable<T>
     {
-        public int Count { get; private set; }
+        private Node root;
 
-        public bool IsReadOnly{get{ return false; } }
-
-        private BinaryNode<T> root;
-
-        private ref BinaryNode<T> Find(ref BinaryNode<T> search, T match)
+        private class Node
         {
-            if (search == null || search.CompareTo(match) == 0)
+            public T data;
+            public Node left;
+            public Node right;
+
+            public Node(T data, Node left, Node right)
             {
-                return ref search;
-            }
-            else if (search.CompareTo(match)==1)
-            {
-                if (search.right != null)
-                {
-                    return ref Find(ref search, match);
-                }
-                return ref search.right;
-            }
-            else
-            {
-                if (search.left != null)
-                {
-                    return ref Find(ref search, match);
-                }
-                return ref search.left;
+                this.data = data;
+                this.left = left;
+                this.right = right;
             }
         }
 
-        public void Add(T item)
+        public void Insert(T data)
         {
-            var node = Find(ref root, item);
-            if (node == null)
-                node = new BinaryNode<T>(item);
+            Search(ref root, data, out Node n) = new Node(data, null, null);
+        }
+
+        public bool Contains(T data)
+        {
+            return (Search(ref root, data, out Node n) != null);
+        }
+
+        private ref Node SearchClosest(ref Node from, T data, out Node prev)
+        {
+            int compare = from == null ? 0 : from.data.CompareTo(data);
+            if (compare == 0)
+            {
+                //found
+                prev = root;
+                return ref from;
+            }
+            else if (compare < 0)
+            {
+                //move right
+                int comp = from.right == null ? 0 : from.right.data.CompareTo(data);
+                if (comp == 0)
+                {
+                    prev = null;
+                    return ref from;
+                }
+                else if (comp > 0)
+                {
+                    if (from.right.right == null)
+                    {
+                        prev = from;
+                        return ref from.right;
+                    }
+                    else
+                        return ref Search(ref from.right, data, out prev);
+                }
+                else
+                {
+                    if (from.right.left == null)
+                    {
+                        prev = from;
+                        return ref from.right;
+                    }
+                    else
+                        return ref Search(ref from.right, data, out prev);
+                }
+            }
             else
-                node.Data = item;
+            {
+                //move left
+                int comp = from.left == null ? 0 : from.left.data.CompareTo(data);
+
+                if (comp == 0)
+                {
+                    prev = null;
+                    return ref from;
+                }
+                else if (comp > 0)
+                {
+                    if (from.left.right == null)
+                    {
+                        prev = from;
+                        return ref from.left;
+                    }
+                    else
+                        return ref Search(ref from.left, data, out prev);
+                }
+                else
+                {
+                    if (from.left.left == null)
+                    {
+                        prev = from;
+                        return ref from.left;
+                    }
+                    else
+                        return ref Search(ref from.left, data, out prev);
+                }
+            }
+        }
+
+        private ref Node Search(ref Node from, T data, out Node prev)
+        {
+
+            int compare = from == null ? 0 : from.data.CompareTo(data);
+            if (compare == 0)
+            {
+                //found
+                prev = root;
+                return ref from;
+            }
+            else if (compare < 0)
+            {
+                //move right
+                if (from.right == null || from.right.data.CompareTo(data) == 0)
+                {
+                    prev = from;
+                    return ref from.right;
+                }
+                else
+                {
+                    return ref Search(ref from.right, data, out prev);
+                }
+            }
+            else
+            {
+                //move left
+                if (from.left == null || from.left.data.CompareTo(data) == 0)
+                {
+                    prev = from;
+                    return ref from.left;
+                }
+                else
+                {
+                    return ref Search(ref from.left, data, out prev);
+                }
+            }
+        }
+
+        public void Remove(T data)
+        {
+            Node node = Search(ref root, data, out Node prev);
+            int compare = prev.data.CompareTo(node.data);
+            Node right = node.right;
+            Node left = node.left;
+            if (right != null && left != null)//two children
+            {
+                Node newNode = SearchClosest(ref right, data, out Node nPrev);
+                if (nPrev == null)
+                {
+                    nPrev = node;
+                }
+                int comp = nPrev.data.CompareTo(newNode.data);
+
+                if (comp > 0)
+                {
+                    nPrev.left = null;
+                }
+                else
+                {
+                    nPrev.right = null;
+                }
+
+                if (compare > 0)
+                {
+                    prev.left = newNode;
+                    newNode.left = left;
+                }
+                else
+                {
+                    prev.right = newNode;
+                    newNode.left = left;
+                }
+            }
+            else if (right != null || left != null)//one child
+            {
+                if (compare > 0)
+                {
+                    prev.left = left ?? right;// replace this node with the valid child node
+                }
+                else
+                {
+                    prev.right = left ?? right;
+                }
+            }
+            else//leaf node
+            {
+                if (compare > 0)
+                {
+                    prev.left = null;
+                }
+                else
+                {
+                    prev.right = null;
+                }
+            }
+
+            /*
+             * case 1: Is a leaf node
+             * case 2: Has one child
+             * case 3: Has two children
+             */
         }
 
         public void Clear()
@@ -53,59 +211,47 @@ namespace DataStructures
             root = null;
         }
 
-        public bool Contains(T item)
+        private interface IVisitor
         {
-            return Find(ref root, item) != null;
+            void Visit(Node node);
         }
 
-        public void CopyTo(T[] array, int arrayIndex)
+        private class PrintVisitor : IVisitor
         {
-            throw new NotImplementedException();
-        }
+            private String output;
+            public List<T> Ts { get; } = new List<T>();
 
-        public IEnumerator<T> GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool Remove(T item)
-        {
-            var node = Find(ref root, item);
-            if (node != null)
+            void IVisitor.Visit(Node node)
             {
-                node = null;
-                return true;
+                output += node.data.ToString() + " ";
+                Ts.Add(node.data);
             }
-            else
-                return false;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    class BinaryNode<T> : IComparable<T> where T : IComparable<T>
-    {
-        public T Data;
-        public BinaryNode<T> right, left;
-
-        public BinaryNode(T data)
-        {
-            Data = data;
-        }
-
-        public int CompareTo(T other)
-        {
-            try
+            public override string ToString()
             {
-                return Data.CompareTo(other);
+                return output;
             }
-            catch (Exception)
-            {
-                return 0;
-            }
+        }
+
+        public T[] ToArray()
+        {
+            PrintVisitor pv = new PrintVisitor();
+            Traverse(root, pv);
+            return pv.Ts.ToArray();
+        }
+
+        public override string ToString()
+        {
+            PrintVisitor pv = new PrintVisitor();
+            Traverse(root, pv);
+            return pv.ToString();
+        }
+
+        private void Traverse(Node from, IVisitor visitor)
+        {
+            if (from == null) return;
+            Traverse(from.left, visitor);
+            visitor.Visit(from);
+            Traverse(from.right, visitor);
         }
     }
 }

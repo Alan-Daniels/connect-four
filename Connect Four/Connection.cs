@@ -17,6 +17,9 @@ namespace Connection
 {
     public delegate void ConnectionEventHandler();
 
+    /// <summary>
+    /// Controls discovery of other users on the same network.
+    /// </summary>
     public static class Advertizer
     {
         private static readonly BackgroundWorker GetAdvertizers = new BackgroundWorker() { WorkerSupportsCancellation = true };
@@ -33,6 +36,10 @@ namespace Connection
         public static ICollection<ConnectionInfo> OutboundReq;
 
         public static Func<string> GetNameAction = new Func<string>(() => { return "Unknown"; });
+        /// <summary>
+        /// Attemps to retrieve a name from the given function.
+        /// </summary>
+        /// <returns>Name</returns>
         private static string GetName()
         {
             try
@@ -48,14 +55,18 @@ namespace Connection
 
         static Advertizer()
         {
-            connections = new HashSet<ConnectionInfo>();//change to binary tree variant
-            InboundReq = new HashSet<ConnectionInfo>();
-            OutboundReq = new HashSet<ConnectionInfo>();
+            connections = new SortedSet<ConnectionInfo>();//change to binary tree variant
+            InboundReq = new SortedSet<ConnectionInfo>();
+            OutboundReq = new SortedSet<ConnectionInfo>();
             GetAdvertizers.DoWork += GetAdvertizers_DoWork;
             AdvertizeCancel = new CancellationTokenSource();
             AdvertizeCancel.Cancel();
         }
 
+        /// <summary>
+        /// Attempts to find a match between Inbound and Outbound requests.
+        /// </summary>
+        /// <returns>A mutual connection</returns>
         public static ConnectionInfo GetFirstRequestPair()
         {
             foreach (var request in InboundReq)
@@ -68,6 +79,10 @@ namespace Connection
             return null;
         }
 
+        /// <summary>
+        /// Sends a UDP packet to the desired location to request starting a game.
+        /// </summary>
+        /// <param name="to"></param>
         public static void SendRequest(ConnectionInfo to)
         {
             UdpClient udp = new UdpClient(AddressFamily.InterNetwork);
@@ -101,8 +116,10 @@ namespace Connection
             }
         }
 
-
-
+        /// <summary>
+        /// Listens for UDP packets.
+        /// Thease packsts can be either discovery packsts("?") or request packsts("!").
+        /// </summary>
         private static async void DoAdvertize()
         {
             UdpClient server = new UdpClient(AddressFamily.InterNetwork);
@@ -123,6 +140,10 @@ namespace Connection
             }
         }
 
+        /// <summary>
+        /// Sends an address and name as response to a discovery packet("?").
+        /// </summary>
+        /// <param name="from">IPAddress of the request</param>
         private static void WhoAmI(object from)
         {
             IPEndPoint to = new IPEndPoint((IPAddress)from, IP.advertizePort);
@@ -137,6 +158,10 @@ namespace Connection
             }
         }
 
+        /// <summary>
+        /// Adds to the Inbound Requests que and adds to the connections list if a matching IP does not exist.
+        /// </summary>
+        /// <param name="from">IPAddress of the request</param>
         private static void AddInboundRequest(object from)
         {
             IPAddress sender = (IPAddress)from;
@@ -169,6 +194,11 @@ namespace Connection
             }
         }
 
+        /// <summary>
+        /// Sends a broadcast to collect all other valid users on the network and fills them into a que.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private static void GetAdvertizers_DoWork(object sender, DoWorkEventArgs e)
         {
             Stopwatch getAdvertizersStopwatch = new Stopwatch();
@@ -206,6 +236,9 @@ namespace Connection
         }
     }
 
+    /// <summary>
+    /// Keeps track of all IP-related stuff.
+    /// </summary>
     static class IP
     {
         public static IPAddress GetLocalIP()
@@ -258,6 +291,9 @@ namespace Connection
         public T Data { get; set; }
     }
 
+    /// <summary>
+    /// Handles sending and recieving messages during an online game.
+    /// </summary>
     public static class GameConnection
     {
         public static event GameConnectionEventHandler<string> MessageRecieved;
@@ -285,6 +321,11 @@ namespace Connection
             GameWriter.DoWork += GameWriter_DoWork;
         }
 
+        /// <summary>
+        /// Writes all new messages to the other client.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private static void GameWriter_DoWork(object sender, DoWorkEventArgs e)
         {
             var writer = (StreamWriter)e.Argument;
@@ -306,6 +347,11 @@ namespace Connection
             }
         }
 
+        /// <summary>
+        /// Reads all messages from the other client and raises the appropriate event.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private static void GameReader_DoWork(object sender, DoWorkEventArgs e)
         {
             var reader = (StreamReader)e.Argument;
@@ -341,6 +387,9 @@ namespace Connection
             StopGame();
         }
 
+        /// <summary>
+        /// Starts the reading and writing of the game and raises the GameConnected event.
+        /// </summary>
         private static void StartGame()
         {
             if (!(GameReader.IsBusy || GameWriter.IsBusy))
@@ -354,6 +403,9 @@ namespace Connection
             }
         }
 
+        /// <summary>
+        /// Stops the reading and writing and raises the GameDisconnected event.
+        /// </summary>
         private static void StopGame()
         {
             if (ConnectionType != ConnectionType.Disconnected)
@@ -392,6 +444,10 @@ namespace Connection
             new Task(Connect, connectTo).Start();
         }
 
+        /// <summary>
+        /// Attepmts to Start the game by connecting to another client.
+        /// </summary>
+        /// <param name="connectTo"></param>
         private static void Connect(object connectTo)
         {
             ConnectionInfo connectionInfo = (ConnectionInfo)connectTo;
@@ -420,6 +476,12 @@ namespace Connection
             }
         }
 
+        /// <summary>
+        /// Waits for any incoming connections.
+        /// When a client connects runs StartGame.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private static void ListenerBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             TcpListener listener = new TcpListener(IP.GameRecieve);
@@ -438,8 +500,17 @@ namespace Connection
         }
     }
 
+    /// <summary>
+    /// Converts c# objects to json strings.
+    /// </summary>
     public class JsonConvert
     {
+        /// <summary>
+        /// Serializes a given object.
+        /// </summary>
+        /// <typeparam name="T">A serializable type</typeparam>
+        /// <param name="input">Object to serialize</param>
+        /// <returns>Json representation</returns>
         public static string Serialise<T>(T input)
         {
             JavaScriptSerializer json_serializer = new JavaScriptSerializer();
@@ -447,35 +518,18 @@ namespace Connection
             return output;
         }
 
+        /// <summary>
+        /// Converts from json string to c# object.
+        /// </summary>
+        /// <typeparam name="T">A serializable type</typeparam>
+        /// <param name="input">Json string</param>
+        /// <returns>An object of type T</returns>
         public static T Deserialise<T>(string input)
         {
             try
             {
                 JavaScriptSerializer json_serializer = new JavaScriptSerializer();
                 T output = json_serializer.Deserialize<T>(input);
-                return output;
-            }
-            catch (Exception)
-            {
-                return default(T);
-            }
-        }
-    }
-
-    public class XmlConvert
-    {
-        public static void Serialise<T>(T input, FileInfo to)
-        {
-            System.Xml.Serialization.XmlSerializer serializer = new System.Xml.Serialization.XmlSerializer(typeof(T));
-            serializer.Serialize(to.OpenWrite(), input);
-        }
-
-        public static T Deserialise<T>(FileInfo from)
-        {
-            try
-            {
-                System.Xml.Serialization.XmlSerializer serializer = new System.Xml.Serialization.XmlSerializer(typeof(T));
-                T output = (T)serializer.Deserialize(from.OpenRead());
                 return output;
             }
             catch (Exception)
@@ -503,8 +557,8 @@ namespace Connection
 
         public int CompareTo(ConnectionInfo other)
         {
-            int a = address.GetHashCode();
-            int b = address.GetHashCode();
+            int a = this.address.GetHashCode();
+            int b = other.address.GetHashCode();
             return a.CompareTo(b);
         }
 

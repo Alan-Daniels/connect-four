@@ -7,7 +7,7 @@ using System.Windows.Media;
 namespace Connect_Four
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Manages communication between Game elements and Controls which elemts are loaded and shown.
     /// </summary>
     public partial class MainWindow : Window, IGameStateChanger
     {
@@ -32,6 +32,11 @@ namespace Connect_Four
             SetState(state, null);
         }
 
+        /// <summary>
+        /// Sets which UI elements are loaded and shown.
+        /// </summary>
+        /// <param name="state">State the window should change to</param>
+        /// <param name="args">Optional arguments</param>
         public void SetState(GameState state, object args = null)
         {
             if (gameState != state)
@@ -69,6 +74,11 @@ namespace Connect_Four
             }
         }
 
+        /// <summary>
+        /// Recieves a message from an element and carries out the command.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void RecieveMessage(object sender, GameMessage e)
         {
             switch (e.operation)

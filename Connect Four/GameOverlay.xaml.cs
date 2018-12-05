@@ -7,7 +7,7 @@ using System.Windows.Input;
 namespace Connect_Four
 {
     /// <summary>
-    /// Interaction logic for GameOverlay.xaml
+    /// Visual elemts that go over the game engine.
     /// </summary>
     public partial class GameOverlay : Grid
     {
@@ -18,10 +18,15 @@ namespace Connect_Four
             InitializeComponent();
             GameConnection.MessageRecieved += GameConnection_MessageRecieved;
             GameConnection.GameDisconnected += GameConnection_GameDisconnected;
-            GameGrid.GameEnd += GameGrid_GameEnd;
+            GameGrid.GameMessage += GameMessage_Recieved;
         }
 
-        private void GameGrid_GameEnd(object sender, CoinType e)
+        /// <summary>
+        /// Lets the game engine communicate an end result to the user via the game chat.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void GameMessage_Recieved(object sender, CoinType e)
         {
             switch (e)
             {
@@ -37,11 +42,21 @@ namespace Connect_Four
             }
         }
 
+        /// <summary>
+        /// Communicates a connection drop to the user.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GameConnection_GameDisconnected(object sender, EventArgs e)
         {
             Application.Current.Dispatcher.Invoke((Action<object>)AddMessage, new Message("Game Disconnected", "Server"));
         }
 
+        /// <summary>
+        /// Passes messages sent from the opponent to the game chat.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e">message</param>
         private void GameConnection_MessageRecieved(object sender, GameConnectionEventArgs<string> e)
         {
             Application.Current.Dispatcher.Invoke((Action<object>)AddMessage, new Message(e.GameObject, "Them"));
@@ -65,6 +80,11 @@ namespace Connect_Four
             NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.DoExit, arg = false });
         }
 
+        /// <summary>
+        /// Saves the game with user choice for the name and exits the current game.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void SaveNExit_Click(object sender, RoutedEventArgs e)
         {
             AskSaveName askName = new AskSaveName();
@@ -76,6 +96,9 @@ namespace Connect_Four
             }
         }
 
+        /// <summary>
+        /// Sends the typed message to the opponent.
+        /// </summary>
         private void Send()
         {
             string line = TxtSend.Text.Trim();
@@ -84,12 +107,21 @@ namespace Connect_Four
             TxtSend.Text = "";
         }
 
+        /// <summary>
+        /// Adds a message to the game chat.
+        /// </summary>
+        /// <param name="msg">message</param>
         private void AddMessage(object msg)
         {
             var message = (Message)msg;
             TxtView.Text += $"\n{message.Sender}: {message.Line}";
         }
 
+        /// <summary>
+        /// Turns on the AFK AI.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnAIOn_Click(object sender, RoutedEventArgs e)
         {
             BtnAIOn.IsEnabled = false;
@@ -97,6 +129,11 @@ namespace Connect_Four
             NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.DoSetAI, arg = true });
         }
 
+        /// <summary>
+        /// Turns off the AFK AI.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnAIOff_Click(object sender, RoutedEventArgs e)
         {
             BtnAIOn.IsEnabled = true;

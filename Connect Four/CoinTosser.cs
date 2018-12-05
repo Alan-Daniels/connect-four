@@ -7,8 +7,11 @@ using System.Windows.Media.Imaging;
 
 namespace Connect_Four
 {
+    /// <summary>
+    /// A helper class for GameGrid that controls the animation and position of coins.
+    /// </summary>
     [Serializable]
-    class CoinTosser
+    public class CoinTosser
     {
         public event EventHandler BlueTurn;
         public event EventHandler RedTurn;
@@ -28,6 +31,12 @@ namespace Connect_Four
             this.canvas = canvas;
         }
 
+        /// <summary>
+        /// Moves the current coin.
+        /// </summary>
+        /// <param name="newLocation">A point describing the new location the coin should move to.</param>
+        /// <param name="gridSize">The width and height of one grid.</param>
+        /// <param name="timeSpan">The amount of time to take moving</param>
         public void Move(Point newLocation, Size gridSize, TimeSpan timeSpan)
         {
             if (Coin != null)
@@ -42,6 +51,9 @@ namespace Connect_Four
             }
         }
 
+        /// <summary>
+        /// Removes the current coin from the canvas and its own memory.
+        /// </summary>
         public void Delete()
         {
             canvas.Children.Remove(Coin);
@@ -49,12 +61,20 @@ namespace Connect_Four
             CoinType = CoinType.None;
         }
 
+        /// <summary>
+        /// Cancels creation of a new coin before it is finished.
+        /// </summary>
         bool deleteNext = false;
         public void DeleteNext()
         {
             deleteNext = true;
         }
 
+        /// <summary>
+        /// Creates a new coin, dropping reference to the previouse and showing it on the canvas.
+        /// </summary>
+        /// <param name="coinType">Type of coin to use.</param>
+        /// <param name="gridSize">The size of one grid.</param>
         public void Create(CoinType coinType, Size gridSize)
         {
             CoinType = coinType;

@@ -17,7 +17,7 @@ using System.Windows.Shapes;
 namespace Connect_Four
 {
     /// <summary>
-    /// Interaction logic for LoadGame.xaml
+    /// Lets the user select a game to load and play against the AI.
     /// </summary>
     public partial class LoadGame : Grid
     {

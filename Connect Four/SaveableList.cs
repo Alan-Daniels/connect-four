@@ -11,6 +11,10 @@ namespace Connect_Four
         void Save();
     }
 
+    /// <summary>
+    /// Impliments a list that can save and load.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
     public class SavableList<T> : List<T> , ISavable
     {
@@ -21,6 +25,10 @@ namespace Connect_Four
             fileInfo = path;
         }
 
+        /// <summary>
+        /// Retrieves raw data from the save file.
+        /// </summary>
+        /// <returns></returns>
         private string GetData()
         {
             string ret = "";
@@ -38,6 +46,9 @@ namespace Connect_Four
             return ret;
         }
 
+        /// <summary>
+        /// Loads data from the save file.
+        /// </summary>
         public void Load()
         {
             Clear();
@@ -50,6 +61,9 @@ namespace Connect_Four
             }
         }
 
+        /// <summary>
+        /// Saves data to the save file.
+        /// </summary>
         public void Save()
         {
             try
