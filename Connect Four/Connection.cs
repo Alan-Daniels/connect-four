@@ -1,5 +1,4 @@
-﻿using Connect_Four;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -315,6 +314,7 @@ namespace Connection
         private static readonly BackgroundWorker GameWriter;
         public static ConnectionType ConnectionType { get; private set; }
         private static TcpClient tcpClient;
+        private static readonly Timer KeepAliveTimer;
 
         private static readonly LinkedList<string> messages;
 
@@ -326,9 +326,23 @@ namespace Connection
             GameReader = new BackgroundWorker() { WorkerSupportsCancellation = true };
             GameWriter = new BackgroundWorker() { WorkerSupportsCancellation = true };
 
+            KeepAliveTimer = new Timer(new TimerCallback(KeepAlive), null, 500, 1000);
+
             ListenerBackgroundWorker.DoWork += ListenerBackgroundWorker_DoWork;
             GameReader.DoWork += GameReader_DoWork;
             GameWriter.DoWork += GameWriter_DoWork;
+        }
+
+        /// <summary>
+        /// Sends a message to the client to make sure the connection is still alive.
+        /// </summary>
+        /// <param name="info"></param>
+        public static void KeepAlive(object info)
+        {
+            if (ConnectionType != ConnectionType.Disconnected)
+            {
+                SendMessage(new Message<object>() { Data = "", Type = "keepAlive" });
+            }
         }
 
         /// <summary>
