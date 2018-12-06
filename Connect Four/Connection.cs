@@ -482,6 +482,7 @@ namespace Connection
         {
             if (ConnectionType != ConnectionType.Disconnected)
             {
+                tcpClient.GetStream().Close();
                 tcpClient.Close();
             }
         }
