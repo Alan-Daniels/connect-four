@@ -15,6 +15,7 @@ namespace Connect_Four
         public ConnectGame()
         {
             InitializeComponent();
+            Advertizer.ClearConnections();
             Advertizer.StartAdvertize();
             GameConnection.ListenForGame();
             GameConnection.GameConnected += GameConnection_GameConnected;

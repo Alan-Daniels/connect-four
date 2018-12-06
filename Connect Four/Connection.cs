@@ -64,6 +64,16 @@ namespace Connection
         }
 
         /// <summary>
+        /// Clears the previouse session's connection info.
+        /// </summary>
+        public static void ClearConnections()
+        {
+            connections.Clear();
+            InboundReq.Clear();
+            OutboundReq.Clear();
+        }
+
+        /// <summary>
         /// Attempts to find a match between Inbound and Outbound requests.
         /// </summary>
         /// <returns>A mutual connection</returns>
