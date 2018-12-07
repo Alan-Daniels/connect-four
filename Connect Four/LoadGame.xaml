@@ -5,9 +5,13 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800">
-    
+
     <WrapPanel x:Name="PnlSaved" HorizontalAlignment="Left" Height="391" VerticalAlignment="Top" Width="800" Background="Aqua"/>
     <Button x:Name="BtnNew" Content="New Game" HorizontalAlignment="Left" Margin="0,430,0,0" VerticalAlignment="Top" Width="75" Click="BtnNew_Click"/>
     <Button x:Name="BtnConnect" Content="Connect" HorizontalAlignment="Left" Margin="715,430,0,0" VerticalAlignment="Top" Width="75" RenderTransformOrigin="4.533,0.326" Click="BtnConnect_Click"/>
+    <Label Content="Board Size" HorizontalAlignment="Left" Margin="116,419,0,0" VerticalAlignment="Top"/>
+    <Label x:Name="LblBoardSize" Content="7x6" HorizontalAlignment="Left" Margin="187,419,0,0" VerticalAlignment="Top"/>
+    <Button x:Name="Btn_Down" Content="\/" HorizontalAlignment="Left" Margin="221,430,0,0" VerticalAlignment="Top" Width="28" Click="Btn_Click"/>
+    <Button x:Name="Btn_Up" Content="/\" HorizontalAlignment="Left" Margin="221,406,0,24" Width="28" Click="Up_Click"/>
 
 </Grid>

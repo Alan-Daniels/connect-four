@@ -23,6 +23,15 @@ namespace Connect_Four
     {
         public event EventHandler<GameMessage> NewGameMessage;
         SavableList<SaveGame> SavedGames;
+        int bSize = 6;
+        int BoardSize { get { return bSize; }
+            set
+            {
+                bSize = value >= 4 && value < 10 ? value : bSize;
+                LblBoardSize.Content = $"{bSize + 1}x{bSize}";
+            }
+        }
+
         public LoadGame()
         {
             InitializeComponent();
@@ -44,12 +53,22 @@ namespace Connect_Four
 
         private void BtnNew_Click(object sender, RoutedEventArgs e)
         {
-            NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.DoLoad, arg = SaveGame.Default });
+            NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.DoLoad, arg = new SaveGame(new CoinType[BoardSize+1][], CoinType.Red, new Size(BoardSize+1,BoardSize), "default") });
         }
 
         private void BtnConnect_Click(object sender, RoutedEventArgs e)
         {
             NewGameMessage?.Invoke(this, new GameMessage() { operation = GameOperation.GoConnect });
+        }
+
+        private void Up_Click(object sender, RoutedEventArgs e)
+        {
+            BoardSize++;
+        }
+
+        private void Btn_Click(object sender, RoutedEventArgs e)
+        {
+            BoardSize--;
         }
     }
 }
